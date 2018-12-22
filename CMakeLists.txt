@@ -5,10 +5,15 @@ set(CMAKE_C_STANDARD 99)
 
 include_directories(chif_net)
 
-add_executable(echo_server examples/echo_server.c chif_net/chif_net.c chif_net/chif_net.h)
-add_executable(echo_client examples/echo_client.c chif_net/chif_net.c chif_net/chif_net.h)
+set(CHIF_NET_SRC
+  chif_net/chif_net.c
+  chif_net/chif_net.h
+  )
+
+add_executable(echo_server_tcp examples/echo_server_tcp.c ${CHIF_NET_SRC})
+add_executable(echo_client_tcp examples/echo_client_tcp.c ${CHIF_NET_SRC})
 
 if (WIN32)
-  target_link_libraries(echo_server ws2_32)
-  target_link_libraries(echo_client ws2_32)
+  target_link_libraries(echo_server_tcp ws2_32)
+  target_link_libraries(echo_client_tcp ws2_32)
 endif ()
