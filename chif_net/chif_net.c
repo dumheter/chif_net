@@ -255,16 +255,16 @@ _chif_net_poll(chif_net_socket socket, int* res, short events,
  * @param buf_size
  */
 static CHIF_NET_INLINE uint16_t
-_chif_net_0s_checksum(uint8_t *buf, size_t buf_size)
+_chif_net_0s_checksum(uint8_t *buf, size_t bufsize)
 {
   uint32_t sum = 0;
   uint16_t ret = 0;
   uint16_t *ptr;
 
-  for (ptr = (uint16_t *) buf; buf_size > 1; ptr++, buf_size -= 2)
+  for (ptr = (uint16_t *) buf; bufsize > 1; ptr++, bufsize -= 2)
     sum += *ptr;
 
-  if (buf_size == 1) {
+  if (bufsize == 1) {
     *(char *) &ret = *(char *) ptr;
     sum += ret;
   }
@@ -348,7 +348,7 @@ chif_net_open_socket(chif_net_socket* socket_out, chif_net_protocol transport_pr
     if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
       ipproto = IPPROTO_ICMP;
     }
-    else if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    else { //if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
       ipproto = IPPROTO_ICMPV6;
     }
     break;
@@ -399,9 +399,9 @@ chif_net_close_socket(chif_net_socket* socket)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_connect(chif_net_socket socket, chif_net_address address)
+chif_net_connect(chif_net_socket socket, chif_net_address* address)
 {
-  const int result = connect(socket, (struct sockaddr*) &address.addr, sizeof(address.addr));
+  const int result = connect(socket, (struct sockaddr*) &address->addr, sizeof(address->addr));
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -413,7 +413,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_bind(chif_net_socket socket, chif_net_port port, chif_net_address_family address_family)
 {
   chif_net_address address;
-//TODO address construction without string
+  //TODO address construction without string
   int result = chif_net_create_address(&address, "0.0.0.0", port, address_family);
 
   if (result == CHIF_NET_SOCKET_ERROR)
@@ -508,7 +508,7 @@ chif_net_readfrom(chif_net_socket socket, uint8_t* buf, size_t bufsize,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_write(chif_net_socket socket, const uint8_t* buffer, size_t size,
+chif_net_write(chif_net_socket socket, const uint8_t* buf, size_t bufsize,
                ssize_t* sent_bytes)
 {
   if (socket == CHIF_NET_INVALID_SOCKET)
@@ -520,7 +520,7 @@ chif_net_write(chif_net_socket socket, const uint8_t* buffer, size_t size,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = send((int) socket, (char*) buffer, (int) size, flag);
+  const ssize_t result = send((int) socket, (char*) buf, (int) bufsize, flag);
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -531,7 +531,7 @@ chif_net_write(chif_net_socket socket, const uint8_t* buffer, size_t size,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_writeto(chif_net_socket socket, const uint8_t* buffer, size_t size,
+chif_net_writeto(chif_net_socket socket, const uint8_t* buf, size_t bufsize,
                  ssize_t* sent_bytes, chif_net_address* target_addr)
 {
   if (socket == CHIF_NET_INVALID_SOCKET)
@@ -543,7 +543,7 @@ chif_net_writeto(chif_net_socket socket, const uint8_t* buffer, size_t size,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = sendto((int) socket, (char*) buffer, (int) size, flag,
+  const ssize_t result = sendto((int) socket, (char*) buf, (int) bufsize, flag,
                                 (struct sockaddr*) target_addr, sizeof(struct sockaddr));
 
   if (result == CHIF_NET_SOCKET_ERROR)
@@ -603,14 +603,14 @@ chif_net_create_address(chif_net_address* address, const char* ip_address,
   int result;
 
   if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    (*address).addr.ss_family = AF_INET;
-    struct sockaddr_in* addr_in = (struct sockaddr_in*) (&address->addr);
+    address->addr.ss_family = AF_INET;
+    struct sockaddr_in* addr_in = (struct sockaddr_in*)(&address->addr);
     result = inet_pton((*address).addr.ss_family, ip_address, &addr_in->sin_addr);
     (*addr_in).sin_port = htons(port);
   }
   else if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
-    (*address).addr.ss_family = AF_INET6;
-    struct sockaddr_in6* addr_in6 = (struct sockaddr_in6*) (&address->addr);
+    address->addr.ss_family = AF_INET6;
+    struct sockaddr_in6* addr_in6 = (struct sockaddr_in6*)(&address->addr);
     result = inet_pton((*address).addr.ss_family, ip_address, &addr_in6->sin6_addr);
     (*addr_in6).sin6_port = htons(port);
   }
@@ -635,10 +635,10 @@ CHIF_NET_INLINE chif_net_result
 chif_net_get_address(chif_net_socket socket, chif_net_address* address)
 {
   struct sockaddr* addr = (struct sockaddr*)&address->addr;
-  socklen_t addr_len = sizeof(chif_net_address);
-  const int result = getsockname(socket, addr, &addr_len);
+  socklen_t addrlen = sizeof(chif_net_address);
+  const int result = getsockname(socket, addr, &addrlen);
 
-  if (addr_len > (socklen_t)sizeof(chif_net_address)) {
+  if (addrlen > (socklen_t)sizeof(chif_net_address)) {
     // address was truncated because lack of storage in addr
     return CHIF_NET_RESULT_UNKNOWN;
   }
@@ -767,17 +767,17 @@ chif_net_set_broadcast(chif_net_socket socket, chif_net_opt_bool broadcast)
 
 
 CHIF_NET_INLINE chif_net_result
-chif_net_set_recv_timeout(chif_net_socket socket, chif_net_millis ms)
+chif_net_set_recv_timeout(chif_net_socket socket, int time_ms)
 {
 #if defined(CHIF_NET_BERKLEY_SOCKET)
   struct timeval timeout;
-  timeout.tv_sec = ms / 1000;
-  timeout.tv_usec = (ms % 1000) * 1000;
+  timeout.tv_sec = time_ms / 1000;
+  timeout.tv_usec = (time_ms % 1000) * 1000;
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_RCVTIMEO, (const char*) &timeout, sizeof(timeout)
     );
 #elif defined(CHIF_NET_WINSOCK2)
-  const DWORD timeout = ms;
+  const DWORD timeout = time_ms;
   return _chif_net_setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 #else
   return CHIF_NET_RESULT_PLATFORM_NOT_SUPPORTED;
@@ -785,17 +785,17 @@ chif_net_set_recv_timeout(chif_net_socket socket, chif_net_millis ms)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_set_send_timeout(chif_net_socket socket, chif_net_millis ms)
+chif_net_set_send_timeout(chif_net_socket socket, int time_ms)
 {
 #if defined(CHIF_NET_BERKLEY_SOCKET)
   struct timeval timeout;
-  timeout.tv_sec = ms / 1000;
-  timeout.tv_usec = (ms % 1000) * 1000;
+  timeout.tv_sec = time_ms / 1000;
+  timeout.tv_usec = (time_ms % 1000) * 1000;
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_SNDTIMEO, (const char*) &timeout, sizeof(timeout)
     );
 #elif defined(CHIF_NET_WINSOCK2)
-  const DWORD timeout = ms;
+  const DWORD timeout = time_ms;
   return _chif_net_setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 #else
   return CHIF_NET_RESULT_PLATFORM_NOT_SUPPORTED;
@@ -803,13 +803,13 @@ chif_net_set_send_timeout(chif_net_socket socket, chif_net_millis ms)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_tcp_set_user_timeout(chif_net_socket socket, uint32_t ms)
+chif_net_tcp_set_user_timeout(chif_net_socket socket, int time_ms)
 {
 #if defined(CHIF_NET_HAS_TCP_DETAILS)
-  return _chif_net_setsockopt(socket, IPPROTO_TCP, TCP_USER_TIMEOUT, &ms, sizeof(ms));
+  return _chif_net_setsockopt(socket, IPPROTO_TCP, TCP_USER_TIMEOUT, &time_ms, sizeof(time_ms));
 #else
   CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(socket);
-  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(ms);
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(time_ms);
   return CHIF_NET_RESULT_PLATFORM_NOT_SUPPORTED;
 #endif
 }
@@ -853,12 +853,12 @@ chif_net_set_own_iphdr(chif_net_socket sock, int provide_own_hdr)
 
 
 CHIF_NET_INLINE chif_net_result
-chif_net_icmp_build(uint8_t* buf, size_t* buf_size, const void* data,
+chif_net_icmp_build(uint8_t* buf, size_t* bufsize, const void* data,
                     size_t data_size, uint16_t id, uint16_t seq)
 {
 #if defined(CHIF_NET_BERKLEY_SOCKET)
   const size_t packet_size = data_size + sizeof(struct iphdr) + sizeof(struct icmphdr);
-  if (*buf_size >= packet_size) {
+  if (*bufsize >= packet_size) {
     struct icmphdr* icmp_hdr = (struct icmphdr*)(buf);
     icmp_hdr->type = ICMP_ECHO;
     icmp_hdr->code = 0; // MUST be 0
@@ -868,7 +868,7 @@ chif_net_icmp_build(uint8_t* buf, size_t* buf_size, const void* data,
     memcpy(buf + sizeof(struct icmphdr), data, data_size);
     icmp_hdr->checksum = _chif_net_0s_checksum(buf, packet_size);
 
-    *buf_size = packet_size;
+    *bufsize = packet_size;
     return CHIF_NET_RESULT_SUCCESS;
   }
   else {

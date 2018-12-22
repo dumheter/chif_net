@@ -27,7 +27,7 @@ int main(int argc, char** argv)
   ok_or_die(chif_net_create_address(&addr, ip, port, af));
   
   printf("connect\n"); 
-  ok_or_die(chif_net_connect(sock, addr));
+  ok_or_die(chif_net_connect(sock, &addr));
 
   const char* str = "chif_net is cool!";
   printf("writing [%s]\n", str);

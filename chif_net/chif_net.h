@@ -116,7 +116,7 @@
  res = chif_net_close_socket(&sock);
 
  printf("shutting down\n");
- chif_net_shutdown(); // needed if on windwos
+ chif_net_shutdown(); // needed if on windows
 
 */
 
@@ -208,8 +208,6 @@ extern "C" {
 
   // boolean used for setsockopt calls
   typedef int chif_net_opt_bool;
-
-  typedef unsigned int chif_net_millis;
 
   typedef uint16_t chif_net_port;
 
@@ -334,7 +332,7 @@ extern "C" {
    * @return Result of the operation.
    */
   chif_net_result
-  chif_net_connect(chif_net_socket socket, chif_net_address address);
+  chif_net_connect(chif_net_socket socket, chif_net_address* address);
 
   /**
    * Bind a socket to the port
@@ -377,13 +375,13 @@ extern "C" {
    * on next call. For SOCK_DGRAM: The excess data is discarded.
    *
    * @param socket
-   * @param buffer
-   * @param size
+   * @param buf
+   * @param bufsize
    * @param read_bytes
    * @return Result of the operation.
    */
   chif_net_result
-  chif_net_read(chif_net_socket socket, uint8_t* buffer, size_t size,
+  chif_net_read(chif_net_socket socket, uint8_t* buf, size_t bufsize,
                 ssize_t* read_bytes);
 
   /**
@@ -407,26 +405,26 @@ extern "C" {
    * Unless nonblock io mode is set, then it will return error. You can use
    * chif_net_can_write to check if the interface is ready to write more data.
    * @param socket
-   * @param buffer
-   * @param buf_size
+   * @param buf
+   * @param bufsize
    * @param sent_bytes
    * @return Result of the operation.
    */
   chif_net_result
-  chif_net_write(chif_net_socket socket, const uint8_t* buffer, size_t size,
+  chif_net_write(chif_net_socket socket, const uint8_t* buf, size_t bufsize,
                  ssize_t* sent_bytes);
 
   /**
    * Write to a socket, just as chif_net_write, but has a target address option.
    * @param socket
-   * @param buffer
-   * @param size
+   * @param buf
+   * @param bufsize
    * @param sent_bytes
    * @param target_addr
    * @return Result of the operation.
    */
   chif_net_result
-  chif_net_writeto(chif_net_socket socket, const uint8_t* buffer, size_t size,
+  chif_net_writeto(chif_net_socket socket, const uint8_t* buf, size_t bufsize,
                    ssize_t* sent_bytes, chif_net_address* target_addr);
 
   /**
@@ -584,19 +582,21 @@ extern "C" {
 
   /**
    * Set the timeout for blocking receive calls.
-   * @param ms
+   * @param socket
+   * @param time_ms
    * @return
    */
   chif_net_result
-  chif_net_set_recv_timeout(chif_net_socket socket, chif_net_millis ms);
+  chif_net_set_recv_timeout(chif_net_socket socket, int time_ms);
 
   /**
    * Set the timeout for blocking send calls.
-   * @param ms
+   * @param socket
+   * @param time_ms
    * @return
    */
   chif_net_result
-  chif_net_set_send_timeout(chif_net_socket socket, chif_net_millis ms);
+  chif_net_set_send_timeout(chif_net_socket socket, int time_ms);
 
   /**
    * Specify the maximum amount of time in milliseconds that
@@ -614,10 +614,10 @@ extern "C" {
    * @return
    */
   chif_net_result
-  chif_net_tcp_set_user_timeout(chif_net_socket socket, uint32_t ms);
+  chif_net_tcp_set_user_timeout(chif_net_socket socket, int time_ms);
 
-  chif_net_result
-  chif_net_tcp_get_user_timeout(chif_net_socket socket, uint32_t ms);
+  /* chif_net_result */
+  /* chif_net_tcp_get_user_timeout(chif_net_socket socket, int time_ms); */
 
   /**
    * If set, disable the Nagle algorithm. This means that segments are always sent
@@ -663,7 +663,7 @@ extern "C" {
    * Build a ICMP packet. Will not provide an IP header, make sure your OS
    * provides one, see function chif_net_set_own_hdr.
    * @param buf Where the icmp packet will be stored.
-   * @param buf_size On success, will set packet size here.
+   * @param bufsize On success, will set packet size here.
    * @param data The data to be put in the icmp data field.
    * @param data_size
    * @param id ICMP id, will appear in the echo response.
@@ -671,7 +671,7 @@ extern "C" {
    * @return If it succeeded
    */
   chif_net_result
-  chif_net_icmp_build(uint8_t* buf, size_t* buf_size, const void* data,
+  chif_net_icmp_build(uint8_t* buf, size_t* bufsize, const void* data,
                       size_t data_size, uint16_t id, uint16_t seq);
 
   /**
