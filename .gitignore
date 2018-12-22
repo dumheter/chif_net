@@ -33,6 +33,18 @@
 
 # CMake
 cmake-build-debug/
+CMakeCache.txt
+CMakeFiles/
 
 # Idea
 .idea/
+
+# Visual Studio
+.vs/
+*.vcxproj*
+Debug/
+Win32/
+ZERO_CHECK.vcxproj*
+*.sln
+cmake_install.cmake
+*.dir/

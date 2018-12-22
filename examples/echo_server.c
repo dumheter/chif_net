@@ -43,7 +43,7 @@ int main(int argc, char** argv)
   ssize_t bytes;
   while (chif_net_read(clisock, buf, bufsize, &bytes) == CHIF_NET_RESULT_SUCCESS) {
     printf("read [%s], echoing it back.\n", (char*)buf);
-    chif_net_write(clisock, buf, bytes, &bytes);
+    chif_net_write(clisock, buf, (size_t)bytes, &bytes);
   }
 
   printf("closing sockets\n");

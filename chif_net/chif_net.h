@@ -165,11 +165,9 @@ extern "C" {
 #endif
 
   // Inline
-#if defined(CHIF_NET_WINDOWS)
-# define CHIF_NET_INLINE inline
-#else
-# define CHIF_NET_INLINE inline
-#endif
+  //# define CHIF_NET_INLINE inline
+# define CHIF_NET_INLINE 
+
 
 #include <stdint.h>
 #include <assert.h>

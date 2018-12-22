@@ -849,6 +849,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_icmp_build(uint8_t* buf, size_t* buf_size, const void* data,
                     size_t data_size, uint16_t id, uint16_t seq)
 {
+#if defined(CHIF_NET_BERKLEY_SOCKET)
   const size_t packet_size = data_size + sizeof(struct iphdr) + sizeof(struct icmphdr);
   if (*buf_size >= packet_size) {
     struct icmphdr* icmp_hdr = (struct icmphdr*)(buf);
@@ -866,6 +867,10 @@ chif_net_icmp_build(uint8_t* buf, size_t* buf_size, const void* data,
   else {
     return CHIF_NET_RESULT_NOT_ENOUGH_SPACE;
   }
+#else
+	assert(!"not implemented");
+	return CHIF_NET_RESULT_FAIL;
+#endif
 }
 
 CHIF_NET_INLINE const char*
