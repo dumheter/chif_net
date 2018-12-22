@@ -392,17 +392,15 @@ extern "C" {
    * TODO test this function
    *
    * @param socket
-   * @param buffer
-   * @param buf_size
+   * @param buf
+   * @param bufsize
    * @param read_bytes
    * @param srcaddr
-   * @param srcaddr_size
    * @return Result of the operation.
    */
   chif_net_result
-  chif_net_readfrom(chif_net_socket socket, uint8_t* buffer, size_t buf_size,
-                    ssize_t* read_bytes, chif_net_address* srcaddr,
-                    socklen_t* srcaddr_size);
+  chif_net_readfrom(chif_net_socket socket, uint8_t* buf, size_t bufsize,
+                    ssize_t* read_bytes, chif_net_address* srcaddr);
 
   /**
    * Write to a socket. Will block if buffer does not fit in the send buffer.
@@ -410,7 +408,7 @@ extern "C" {
    * chif_net_can_write to check if the interface is ready to write more data.
    * @param socket
    * @param buffer
-   * @param size
+   * @param buf_size
    * @param sent_bytes
    * @return Result of the operation.
    */

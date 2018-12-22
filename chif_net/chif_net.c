@@ -313,14 +313,21 @@ chif_net_open_socket(chif_net_socket* socket_out, chif_net_protocol transport_pr
 {
   int addrfam;
   switch (address_family) {
-  case CHIF_NET_ADDRESS_FAMILY_IPV4:
-    addrfam = AF_INET; break;
-  case CHIF_NET_ADDRESS_FAMILY_IPV6:
-    addrfam = AF_INET6; break;
-  case CHIF_NET_ADDRESS_FAMILY_UNIX:
-    addrfam = AF_UNIX; break;
-  default:
+  case CHIF_NET_ADDRESS_FAMILY_IPV4: {
+    addrfam = AF_INET;
+    break;
+  }
+  case CHIF_NET_ADDRESS_FAMILY_IPV6: {
+    addrfam = AF_INET6;
+    break;
+  }
+  case CHIF_NET_ADDRESS_FAMILY_UNIX: {
+    addrfam = AF_UNIX;
+    break;
+  }
+  default: {
     return CHIF_NET_RESULT_INVALID_PROTOCOL;
+  }
   }
 
   int tproto;
@@ -412,7 +419,7 @@ chif_net_bind(chif_net_socket socket, chif_net_port port, chif_net_address_famil
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
 
-  result = bind(socket, (struct sockaddr*) &address, sizeof(address));
+  result = bind(socket, (struct sockaddr*) &address.addr, sizeof(address.addr));
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -447,7 +454,7 @@ chif_net_accept(chif_net_socket server_socket, chif_net_address* client_address,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_read(chif_net_socket socket, uint8_t* buffer, size_t size,
+chif_net_read(chif_net_socket socket, uint8_t* buf, size_t bufsize,
               ssize_t* read_bytes)
 {
   if (socket == CHIF_NET_INVALID_SOCKET)
@@ -459,7 +466,7 @@ chif_net_read(chif_net_socket socket, uint8_t* buffer, size_t size,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = recv(socket, (char*) buffer, (int) size, flag);
+  const ssize_t result = recv(socket, (char*)buf, (int)bufsize, flag);
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -472,8 +479,8 @@ chif_net_read(chif_net_socket socket, uint8_t* buffer, size_t size,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_readfrom(chif_net_socket socket, uint8_t* buffer, size_t buf_size,
-                  ssize_t* read_bytes, chif_net_address* srcaddr, socklen_t* srcaddr_size)
+chif_net_readfrom(chif_net_socket socket, uint8_t* buf, size_t bufsize,
+                  ssize_t* read_bytes, chif_net_address* srcaddr)
 {
   if (socket == CHIF_NET_INVALID_SOCKET)
     return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -484,10 +491,10 @@ chif_net_readfrom(chif_net_socket socket, uint8_t* buffer, size_t buf_size,
   flag = MSG_NOSIGNAL;
 #endif
 
-  *srcaddr_size = sizeof(struct sockaddr);
+  socklen_t srcaddr_size = sizeof(struct sockaddr);
   const ssize_t result = recvfrom(
-    socket, (char*)buffer, buf_size, flag,
-    (struct sockaddr*)srcaddr, srcaddr_size
+    socket, (char*)buf, bufsize, flag,
+    (struct sockaddr*)srcaddr, &srcaddr_size
     );
 
   if (result == CHIF_NET_SOCKET_ERROR)

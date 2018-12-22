@@ -18,7 +18,7 @@ int main(int argc, char** argv)
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
   const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
-  ok_or_die(chif_net_open_socket(&sock, af, proto));
+  ok_or_die(chif_net_open_socket(&sock, proto, af));
   
   printf("bind socket\n");
   const chif_net_port port = 1337; 
