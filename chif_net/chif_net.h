@@ -215,6 +215,7 @@ extern "C" {
   typedef SOCKET chif_net_socket;
   typedef long long ssize_t;
   typedef TIMEVAL timeval;
+  typedef unsigned long nfds_t;
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
   typedef int chif_net_socket;
 #endif
@@ -252,7 +253,9 @@ extern "C" {
       CHIF_NET_RESULT_FAIL,
       CHIF_NET_RESULT_INVALID_PROTOCOL,
       CHIF_NET_RESULT_NO_MEMORY,
-      CHIF_NET_RESULT_NO_NETWORK
+      CHIF_NET_RESULT_NO_NETWORK,
+      CHIF_NET_RESULT_BLOCKING_CANCELED,
+      CHIF_NET_RESULT_NET_UNREACHABLE
     } chif_net_result;
 
   typedef enum

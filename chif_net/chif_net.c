@@ -73,6 +73,31 @@ chif_net_result _chif_net_get_specific_result_type()
   case WSAEFAULT:
     return CHIF_NET_RESULT_INVALID_INPUT_PARAM;
 
+  case WSAEINTR:
+    return CHIF_NET_RESULT_BLOCKING_CANCELED;
+
+  case WSAEALREADY:
+    return CHIF_NET_RESULT_IN_PROGRESS;
+
+  case WSAEINVAL:
+    return CHIF_NET_RESULT_IN_PROGRESS;
+
+  case WSAEISCONN:
+    return CHIF_NET_RESULT_ALREADY_CONNECTED;
+
+  case WSAENETUNREACH:
+  case WSAEHOSTUNREACH:
+    return CHIF_NET_RESULT_NET_UNREACHABLE;
+
+  case WSAETIMEDOUT:
+    return CHIF_NET_RESULT_TIMEDOUT;
+
+  case WSAEWOULDBLOCK:
+    return CHIF_NET_RESULT_WOULD_BLOCK;
+
+  case WSAECONNREFUSED:
+    return CHIF_NET_RESULT_CONNECTION_REFUSED;
+
   default:
     return CHIF_NET_RESULT_UNKNOWN;
   }
@@ -207,18 +232,14 @@ static CHIF_NET_INLINE chif_net_result
 _chif_net_poll(chif_net_socket socket, int* res, short events,
                int timeout_ms)
 {
-#if defined(CHIF_NET_WINDOWS)
-  assert(false && "not implemeneted");
-  (void)socket;
-  (void)res;
-  (void)events;
-  return CHIF_NET_RESULT_FAIL;
-#else
-
   struct pollfd pfd = {socket, events, 0};
   nfds_t nfds = 1;
 
+#if defined(CHIF_NET_WINSOCK2)
+  int pres = WSAPoll(&pfd, nfds, timeout_ms);
+#else // if defined(CHIF_NET_BERKLEY_SOCKET)
   int pres = poll(&pfd, nfds, timeout_ms);
+#endif
 
   if (pres == 0) {
     *res = 0;
@@ -246,7 +267,6 @@ _chif_net_poll(chif_net_socket socket, int* res, short events,
   }
 
   return CHIF_NET_RESULT_SUCCESS;
-#endif
 }
 
 /**
@@ -948,6 +968,10 @@ chif_net_result_to_string(chif_net_result result)
     return "NO_MEMORY";
   case CHIF_NET_RESULT_NO_NETWORK:
     return "NO_NETWORK";
+  case CHIF_NET_RESULT_BLOCKING_CANCELED:
+    return "BLOCKING_CANCELED";
+  case CHIF_NET_RESULT_NET_UNREACHABLE:
+    return "NET_UNREACHABLE";
   }
 
 // should never happen
