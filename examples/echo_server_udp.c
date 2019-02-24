@@ -1,8 +1,9 @@
 #include "chif_net.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-void ok_or_die(chif_net_result res)
+void
+ok_or_die(chif_net_result res)
 {
   if (res != CHIF_NET_RESULT_SUCCESS) {
     printf("failed with error %s.\n", chif_net_result_to_string(res));
@@ -10,7 +11,8 @@ void ok_or_die(chif_net_result res)
   }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
   chif_net_startup();
 
@@ -19,28 +21,33 @@ int main(int argc, char** argv)
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
   const chif_net_protocol proto = CHIF_NET_PROTOCOL_UDP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
-  
+
   printf("bind socket\n");
   const chif_net_port port = 1337;
-  ok_or_die(chif_net_bind(sock, port, af)); 
+  ok_or_die(chif_net_bind(sock, port, af));
 
   printf("waiting for message\n");
-  enum { bufsize = 1024 };
+  enum
+  {
+    bufsize = 1024
+  };
   uint8_t buf[bufsize];
   ssize_t bytes;
-  chif_net_address srcaddr; 
+  chif_net_address srcaddr;
   ok_or_die(chif_net_readfrom(sock, buf, bufsize, &bytes, &srcaddr));
   char srcip[CHIF_NET_IPVX_STRING_LENGTH];
-  ok_or_die(chif_net_ip_from_address(&srcaddr, srcip, CHIF_NET_IPVX_STRING_LENGTH));
+  ok_or_die(
+    chif_net_ip_from_address(&srcaddr, srcip, CHIF_NET_IPVX_STRING_LENGTH));
   chif_net_port srcport;
   ok_or_die(chif_net_port_from_address(&srcaddr, &srcport));
-  printf("read [%s] from %s:%d, echoing it back.\n", (char*)buf, srcip, srcport);
+  printf(
+    "read [%s] from %s:%d, echoing it back.\n", (char*)buf, srcip, srcport);
   chif_net_writeto(sock, buf, (size_t)bytes, &bytes, &srcaddr);
 
-  printf("closing socket\n"); 
+  printf("closing socket\n");
   chif_net_close_socket(&sock);
 
   printf("exiting\n");
-  chif_net_shutdown(); 
+  chif_net_shutdown();
   return 0;
 }

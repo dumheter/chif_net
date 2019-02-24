@@ -1,8 +1,9 @@
 #include "chif_net.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-void ok_or_die(chif_net_result res)
+void
+ok_or_die(chif_net_result res)
 {
   if (res != CHIF_NET_RESULT_SUCCESS) {
     printf("failed with error %s.\n", chif_net_result_to_string(res));
@@ -10,7 +11,8 @@ void ok_or_die(chif_net_result res)
   }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
   chif_net_startup();
 
@@ -28,11 +30,17 @@ int main(int argc, char** argv)
 
   const char* str = "chif_net is cool!";
   printf("writing [%s]\n", str);
-  enum { strlen = 18};
+  enum
+  {
+    strlen = 18
+  };
   ssize_t bytes;
-  ok_or_die(chif_net_writeto(sock, (uint8_t*)str, strlen, &bytes, &addr)); 
+  ok_or_die(chif_net_writeto(sock, (uint8_t*)str, strlen, &bytes, &addr));
 
-  enum { bufsize = 1024 };
+  enum
+  {
+    bufsize = 1024
+  };
   uint8_t buf[bufsize];
   ok_or_die(chif_net_read(sock, buf, bufsize, &bytes));
   printf("read [%s]\n", (char*)buf);

@@ -1,8 +1,9 @@
 #include "chif_net.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-void ok_or_die(chif_net_result res)
+void
+ok_or_die(chif_net_result res)
 {
   if (res != CHIF_NET_RESULT_SUCCESS) {
     printf("failed with error %s.\n", chif_net_result_to_string(res));
@@ -10,7 +11,8 @@ void ok_or_die(chif_net_result res)
   }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
   chif_net_startup();
 
@@ -19,9 +21,9 @@ int main(int argc, char** argv)
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
   const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
-  
+
   printf("bind socket\n");
-  const chif_net_port port = 1337; 
+  const chif_net_port port = 1337;
   ok_or_die(chif_net_bind(sock, port, af));
 
   printf("listen for connection\n");
@@ -34,14 +36,19 @@ int main(int argc, char** argv)
 
   char cliip[CHIF_NET_IPVX_STRING_LENGTH];
   chif_net_port cliport;
-  ok_or_die(chif_net_ip_from_address(&cliaddr, cliip, CHIF_NET_IPVX_STRING_LENGTH));
+  ok_or_die(
+    chif_net_ip_from_address(&cliaddr, cliip, CHIF_NET_IPVX_STRING_LENGTH));
   ok_or_die(chif_net_port_from_address(&cliaddr, &cliport));
   printf("client connected from %s:%d\n\n", cliip, cliport);
 
-  enum { bufsize = 1024 };
+  enum
+  {
+    bufsize = 1024
+  };
   uint8_t buf[bufsize];
   ssize_t bytes;
-  while (chif_net_read(clisock, buf, bufsize, &bytes) == CHIF_NET_RESULT_SUCCESS) {
+  while (chif_net_read(clisock, buf, bufsize, &bytes) ==
+         CHIF_NET_RESULT_SUCCESS) {
     printf("read [%s], echoing it back.\n", (char*)buf);
     chif_net_write(clisock, buf, (size_t)bytes, &bytes);
   }
@@ -51,6 +58,6 @@ int main(int argc, char** argv)
   chif_net_close_socket(&sock);
 
   printf("exiting\n");
-  chif_net_shutdown(); 
+  chif_net_shutdown();
   return 0;
 }
