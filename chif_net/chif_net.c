@@ -515,12 +515,23 @@ chif_net_readfrom(chif_net_socket socket,
 #endif
 
   socklen_t srcaddr_size = sizeof(struct sockaddr);
+
+  // buflen param is diffrent type in winsock2 lib
+#if defined(CHIF_NET_WINSOCK2)
+  if (bufsize > INT_MAX)
+    return CHIF_NET_RESULT_BUFSIZE_INVALID;
+#define READFROM_BUFSIZE (int)bufsize
+#else
+#define READFROM_BUFSIZE bufsize
+#endif
+
   const ssize_t result = recvfrom(socket,
                                   (char*)buf,
-                                  bufsize,
+                                  READFROM_BUFSIZE,
                                   flag,
                                   (struct sockaddr*)srcaddr,
                                   &srcaddr_size);
+#undef READFROM_BUFSIZE
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -999,6 +1010,8 @@ chif_net_result_to_string(chif_net_result result)
       return "BLOCKING_CANCELED";
     case CHIF_NET_RESULT_NET_UNREACHABLE:
       return "NET_UNREACHABLE";
+    case CHIF_NET_RESULT_BUFSIZE_INVALID:
+      return "CHIF_NET_RESULT_BUFSIZE_INVALID";
   }
 
   // should never happen
