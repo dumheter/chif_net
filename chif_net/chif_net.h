@@ -157,6 +157,7 @@ extern "C"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <netinet/ip.h>
 #endif
 
 // linux only
