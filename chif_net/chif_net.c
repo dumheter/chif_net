@@ -442,7 +442,7 @@ chif_net_bind(chif_net_socket socket,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_listen(chif_net_socket socket, uint32_t maximum_backlog)
+chif_net_listen(chif_net_socket socket, int maximum_backlog)
 {
   const int result = listen(socket, maximum_backlog);
 
@@ -559,8 +559,7 @@ chif_net_write(chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result =
-    send((int)socket, (const char*)buf, (int)bufsize, flag);
+  const ssize_t result = send(socket, (const char*)buf, (int)bufsize, flag);
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -587,7 +586,7 @@ chif_net_writeto(chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = sendto((int)socket,
+  const ssize_t result = sendto(socket,
                                 (const char*)buf,
                                 (int)bufsize,
                                 flag,
@@ -628,13 +627,13 @@ CHIF_NET_INLINE chif_net_result
 chif_net_set_socket_blocking(chif_net_socket socket, bool blocking)
 {
 #if defined(CHIF_NET_WINSOCK2)
-  ULONG blocking_mode = !blocking;
-  int32_t result = ioctlsocket(socket, FIONBIO, &blocking_mode);
+  u_long blocking_mode = !blocking;
+  int result = ioctlsocket(socket, (long)FIONBIO, &blocking_mode);
   if (result == CHIF_NET_SOCKET_ERROR) {
     return _chif_net_get_specific_result_type();
   }
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
-  int32_t flags = fcntl(socket, F_GETFL, 0);
+  int flags = fcntl(socket, F_GETFL, 0);
   if (blocking)
     flags &= ~O_NONBLOCK;
   else
@@ -832,7 +831,7 @@ chif_net_set_recv_timeout(chif_net_socket socket, int time_ms)
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
 #elif defined(CHIF_NET_WINSOCK2)
-  const DWORD timeout = time_ms;
+  const DWORD timeout = (DWORD)time_ms;
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
 #else
@@ -850,7 +849,7 @@ chif_net_set_send_timeout(chif_net_socket socket, int time_ms)
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
 #elif defined(CHIF_NET_WINSOCK2)
-  const DWORD timeout = time_ms;
+  const DWORD timeout = (DWORD)time_ms;
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
 #else
@@ -939,7 +938,7 @@ chif_net_icmp_build(uint8_t* buf,
   (void)data_size;
   (void)id;
   (void)seq;
-  assert(!"not implemented");
+  assert(false && "not implemented");
   return CHIF_NET_RESULT_FAIL;
 #endif
 }

@@ -22,8 +22,8 @@
   SOFTWARE.
 */
 
-#ifndef CHIF_NET_H
-#define CHIF_NET_H
+#ifndef CHIF_NET_H_
+#define CHIF_NET_H_
 
 /**
  * @date 2017-12-11
@@ -149,6 +149,7 @@ extern "C"
 #include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <poll.h>
 #include <sys/ioctl.h>
@@ -156,11 +157,17 @@ extern "C"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#endif
+
+// linux only
 #if defined(__linux__)
 #include <linux/icmp.h>
 #endif
-#include <netinet/ip.h>
-#endif
+
+#include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
 
 /**
  * Only linux allows for some more advanced tcp setting.
@@ -174,11 +181,6 @@ extern "C"
 // Inline
 //# define CHIF_NET_INLINE inline
 #define CHIF_NET_INLINE
-
-#include <assert.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
 
   // ====================================================================== //
   // Macros
@@ -361,8 +363,7 @@ typedef int chif_net_socket;
    *                        Use CHIF_NET_DEFAULT_BACKLOG for default.
    * @return
    */
-  chif_net_result chif_net_listen(chif_net_socket socket,
-                                  uint32_t maximum_backlog);
+  chif_net_result chif_net_listen(chif_net_socket socket, int maximum_backlog);
 
   /**
    *
