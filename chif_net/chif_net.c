@@ -922,6 +922,12 @@ chif_net_icmp_build(uint8_t* buf,
     return CHIF_NET_RESULT_NOT_ENOUGH_SPACE;
   }
 #else
+  (void)buf;
+  (void)bufsize;
+  (void)data;
+  (void)data_size;
+  (void)id;
+  (void)seq;
   assert(!"not implemented");
   return CHIF_NET_RESULT_FAIL;
 #endif
