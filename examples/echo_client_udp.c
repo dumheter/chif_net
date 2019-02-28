@@ -7,6 +7,10 @@ ok_or_die(chif_net_result res)
 {
   if (res != CHIF_NET_RESULT_SUCCESS) {
     printf("failed with error %s.\n", chif_net_result_to_string(res));
+#if defined(_WIN32) || defined(_WIN64)
+    printf("\nenter any key to exit\n> ");
+    int in = getchar();
+#endif
     exit(1);
   }
 }
@@ -50,5 +54,11 @@ main(int argc, char** argv)
 
   printf("exit\n");
   chif_net_shutdown();
+
+#if defined(_WIN32) || defined(_WIN64)
+  printf("\nenter any key to exit\n> ");
+  int in = getchar();
+#endif
+
   return 0;
 }

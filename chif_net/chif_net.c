@@ -906,7 +906,7 @@ chif_net_set_own_iphdr(chif_net_socket sock, int provide_own_hdr)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_icmp_build(uint8_t* buf,
+chif_net_icmp_build(const uint8_t* buf,
                     size_t* bufsize,
                     const void* data,
                     size_t data_size,

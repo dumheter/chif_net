@@ -157,7 +157,6 @@ extern "C"
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <netinet/ip.h>
 #endif
 
 // linux only
@@ -212,6 +211,9 @@ extern "C"
 #define CHIF_NET_IPV6_STRING_LENGTH INET6_ADDRSTRLEN
 // Can hold both ipv4 and ipv6 addresses represented as a string.
 #define CHIF_NET_IPVX_STRING_LENGTH INET6_ADDRSTRLEN
+
+// When binding to a port, use this to have the kernel select an unsued port.
+#define CHIF_NET_UNUSED_PORT 0
 
   // ====================================================================== //
   // Types
@@ -697,7 +699,7 @@ typedef int chif_net_socket;
    * @param seq ICMP sequence, will appear in the echo response.
    * @return If it succeeded
    */
-  chif_net_result chif_net_icmp_build(uint8_t* buf,
+  chif_net_result chif_net_icmp_build(const uint8_t* buf,
                                       size_t* bufsize,
                                       const void* data,
                                       size_t data_size,
