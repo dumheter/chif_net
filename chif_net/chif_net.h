@@ -239,7 +239,7 @@ typedef int chif_net_socket;
     CHIF_NET_RESULT_SUCCESS,
     CHIF_NET_RESULT_LIBRARY_NOT_INITIALIZED,
     CHIF_NET_RESULT_BLOCKING,
-    CHIF_NET_MAX_SOCKETS_REACHED,
+    CHIF_NET_RESULT_MAX_SOCKETS_REACHED,
     CHIF_NET_RESULT_NOT_A_SOCKET,
     CHIF_NET_RESULT_WOULD_BLOCK,
     CHIF_NET_RESULT_CONNECTION_REFUSED,
@@ -515,7 +515,7 @@ typedef int chif_net_socket;
                                        chif_net_address* address);
 
   /*
-   * From a socket, get the IP address of the remote device as a string in the
+   * From a socket, get the IP address of it as a string in the
    * dotted four octet format.
    * @param socket
    * @param str
@@ -529,7 +529,7 @@ typedef int chif_net_socket;
                                           size_t strlen);
 
   /**
-   * From a address, get the IP address of the remote device as a string in the
+   * From an address, get the IP address of it as a string in the
    * dotted four octet format.
    * @param socket
    * @param str Output parameter
@@ -543,7 +543,7 @@ typedef int chif_net_socket;
                                            size_t strlen);
 
   /*
-   * From a socket, get the port of the remote device.
+   * From a socket, get the port of it.
    * @param socket
    * @param port
    * @return
@@ -552,7 +552,7 @@ typedef int chif_net_socket;
                                             chif_net_port* port);
 
   /*
-   * From a socket, get the port of the remote device.
+   * From an address, get the port of it.
    * @param address
    * @param port
    * @return

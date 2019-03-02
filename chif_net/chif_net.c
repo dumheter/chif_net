@@ -43,7 +43,7 @@ _chif_net_get_specific_result_type()
       return CHIF_NET_RESULT_LIBRARY_NOT_INITIALIZED;
 
     case WSAEMFILE:
-      return CHIF_NET_MAX_SOCKETS_REACHED;
+      return CHIF_NET_RESULT_MAX_SOCKETS_REACHED;
 
     case WSAENOTSOCK:
       return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -955,8 +955,8 @@ chif_net_result_to_string(chif_net_result result)
       return "LIBRARY_NOT_INITIALIZED";
     case CHIF_NET_RESULT_BLOCKING:
       return "BLOCKING";
-    case CHIF_NET_MAX_SOCKETS_REACHED:
-      return "SOCKETS_REACHED";
+    case CHIF_NET_RESULT_MAX_SOCKETS_REACHED:
+      return "MAX_SOCKETS_REACHED";
     case CHIF_NET_RESULT_NOT_A_SOCKET:
       return "NOT_A_SOCKET";
     case CHIF_NET_RESULT_WOULD_BLOCK:
