@@ -514,6 +514,12 @@ typedef int chif_net_socket;
   chif_net_result chif_net_get_address(chif_net_socket socket,
                                        chif_net_address* address);
 
+  /**
+   * Get the address of the peer that the socket is connected to.
+   */
+  chif_net_result chif_net_get_peer_address(chif_net_socket socket,
+                                            chif_net_address* address);
+
   /*
    * From a socket, get the IP address of it as a string in the
    * dotted four octet format.
@@ -557,7 +563,7 @@ typedef int chif_net_socket;
    * @param port
    * @return
    */
-  chif_net_result chif_net_port_from_address(chif_net_address* address,
+  chif_net_result chif_net_port_from_address(const chif_net_address* address,
                                              chif_net_port* port);
 
   /**

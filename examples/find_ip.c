@@ -81,6 +81,17 @@ find_LAN_address()
     printf("\t%s:%d\n", ip, p);
   }
 
+  {
+    printf("peer ip and port from address\n");
+    chif_net_address addr;
+    ok_or_die(chif_net_get_peer_address(sock, &addr));
+    char ip[CHIF_NET_IPVX_STRING_LENGTH];
+    ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
+    chif_net_port p;
+    ok_or_die(chif_net_port_from_address(&addr, &p));
+    printf("\t%s:%d\n", ip, p);
+  }
+
   printf("closing sockets\n");
   chif_net_close_socket(&sock);
 }

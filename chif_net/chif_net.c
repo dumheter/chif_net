@@ -701,6 +701,25 @@ chif_net_get_address(chif_net_socket socket, chif_net_address* address)
 }
 
 CHIF_NET_INLINE chif_net_result
+chif_net_get_peer_address(chif_net_socket socket, chif_net_address* address)
+{
+  struct sockaddr* addr = (struct sockaddr*)&address->addr;
+  socklen_t addr_len = sizeof(chif_net_address);
+  const int result = getpeername(socket, addr, &addr_len);
+
+  if (addr_len > (socklen_t) sizeof(chif_net_address)) {
+    // address was truncated because lack of storage in addr
+    return CHIF_NET_RESULT_BUFSIZE_INVALID;
+  }
+
+  if (result != 0) {
+    return _chif_net_get_specific_result_type();
+  }
+
+  return CHIF_NET_RESULT_SUCCESS;
+}
+
+CHIF_NET_INLINE chif_net_result
 chif_net_ip_from_socket(chif_net_socket socket, char* str, size_t strlen)
 {
   chif_net_address address;
@@ -748,13 +767,13 @@ chif_net_port_from_socket(chif_net_socket socket, chif_net_port* port)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_port_from_address(chif_net_address* address, chif_net_port* port)
+chif_net_port_from_address(const chif_net_address* address, chif_net_port* port)
 {
   if (address->addr.ss_family == AF_INET) {
-    struct sockaddr_in* addr_ivp4 = (struct sockaddr_in*)&address->addr;
+    const struct sockaddr_in* addr_ivp4 = (const struct sockaddr_in*)&address->addr;
     *port = ntohs(addr_ivp4->sin_port);
   } else if (address->addr.ss_family == AF_INET6) {
-    struct sockaddr_in6* addr_ivp6 = (struct sockaddr_in6*)&address->addr;
+    const struct sockaddr_in6* addr_ivp6 = (const struct sockaddr_in6*)&address->addr;
     *port = ntohs(addr_ivp6->sin6_port);
   }
 
