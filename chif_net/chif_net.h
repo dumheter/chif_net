@@ -263,7 +263,7 @@ typedef int chif_net_socket;
                                    chif_net_address* address);
 
   /**
-   * Bind a socket to the port
+   * Bind a socket to the port on address localhost.
    * @param socket
    * @param port
    * @param address_family
@@ -271,7 +271,7 @@ typedef int chif_net_socket;
    */
   chif_net_result chif_net_bind(chif_net_socket socket,
                                 chif_net_port port,
-                                chif_net_address_family address_family);
+                                chif_net_address_family af);
 
   /**
    * Start listening for connections on a socket.

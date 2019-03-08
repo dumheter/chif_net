@@ -28,6 +28,7 @@
 
 #include "chif_net.h"
 
+#include <stdio.h>
 #if defined(CHIF_NET_BERKLEY_SOCKET)
 #include <netdb.h>
 #endif
@@ -450,19 +451,38 @@ chif_net_connect(chif_net_socket socket, chif_net_address* address)
 CHIF_NET_INLINE chif_net_result
 chif_net_bind(chif_net_socket socket,
               chif_net_port port,
-              chif_net_address_family address_family)
+              chif_net_address_family af)
 {
+  //chif_net_create_address(&address, "0.0.0.0", port, address_family);
+
   chif_net_address address;
-  // TODO address construction without string
-  int result =
-    chif_net_create_address(&address, "0.0.0.0", port, address_family);
+  char portstr[6];
+  const int pres = sprintf(portstr, "%u", port);
+  if (pres < 0) { return CHIF_NET_RESULT_FAIL; }
+  const chif_net_result result =
+      chif_net_lookup_address(&address, "localhost", portstr, af,
+                              CHIF_NET_PROTOCOL_TCP);
 
-  if (result == CHIF_NET_SOCKET_ERROR)
+  if (result != CHIF_NET_RESULT_SUCCESS) {
     return _chif_net_get_specific_result_type();
+  }
 
-  result = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr));
+  int bindres;
+  switch (address.addr.ss_family) {
+    case AF_INET: {
+      bindres = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in));
+      break;
+    }
+    case AF_INET6: {
+      // TODO test this
+      bindres = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in6));
+    }
+    default: {
+      return CHIF_NET_RESULT_FAIL;
+    }
+  }
 
-  if (result == CHIF_NET_SOCKET_ERROR)
+  if (bindres != 0)
     return _chif_net_get_specific_result_type();
 
   return CHIF_NET_RESULT_SUCCESS;
