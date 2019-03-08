@@ -477,6 +477,7 @@ chif_net_bind(chif_net_socket socket,
       // TODO test this
       bindres = bind(
         socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in6));
+      break;
     }
     default: {
       return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
@@ -758,10 +759,32 @@ chif_net_lookup_address(chif_net_address* address_out,
 {
   struct addrinfo hints, *ai;
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family =
-    address_family == CHIF_NET_ADDRESS_FAMILY_IPV4 ? AF_INET : AF_INET6;
-  hints.ai_socktype =
-    transport_protocol == CHIF_NET_PROTOCOL_TCP ? SOCK_STREAM : SOCK_DGRAM;
+  switch (address_family) {
+    case CHIF_NET_ADDRESS_FAMILY_IPV4: {
+      hints.ai_family = AF_INET;
+      break;
+    }
+    case CHIF_NET_ADDRESS_FAMILY_IPV6: {
+      hints.ai_family = AF_INET6;
+      break;
+    }
+    default: {
+      return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
+    }
+  }
+  switch (transport_protocol) {
+    case CHIF_NET_PROTOCOL_TCP: {
+      hints.ai_socktype = SOCK_STREAM;
+      break;
+    }
+    case CHIF_NET_PROTOCOL_UDP: {
+      hints.ai_socktype = SOCK_DGRAM;
+      break;
+    }
+    default: {
+      return CHIF_NET_RESULT_INVALID_PROTOCOL;
+    }
+  }
   if (name == NULL) {
     hints.ai_flags = AI_PASSIVE; // wildcard IP address
   }
