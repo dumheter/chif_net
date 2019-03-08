@@ -29,96 +29,8 @@
  * @date 2017-12-11
  * @authors Christoffer Gustafsson
  *
- *
- * @examples
- *
- * Echo server:
-
- chif_net_startup(); // needed if on windwos
-
- printf("~ server ~\n");
-
- chif_net_socket sock;
- chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
- chif_net_address_family fam = CHIF_NET_ADDRESS_FAMILY_IPV4;
- const uint16_t PORT = 1337;
-
- chif_net_result res = chif_net_open_socket(&sock, proto, fam);
- printf("open server socket\n");
-
- res = chif_net_bind(sock, PORT, fam);
- printf("bind\n");
-
- res = chif_net_listen(sock, CHIF_NET_DEFAULT_MAXIMUM_BACKLOG);
- printf("listen\nwating for client to connect\n");
-
- chif_net_address cli_addr;
- chif_net_socket cli_sock = chif_net_accept(sock, &cli_addr);
- printf("accepted client\nwating for message\n");
-
- enum buf_size { buf_size = 256 };
- uint8_t buf[buf_size+1]; // +1 allows to null terminate the message for print
- ssize_t read_bytes;
- res = chif_net_read(cli_sock, buf, buf_size, &read_bytes);
- buf[read_bytes] = 0;
- printf("read %s\n", buf);
-
- ssize_t sent_bytes;
- res = chif_net_write(cli_sock, buf, buf_size, &sent_bytes);
- printf("echoed back message\n");
-
- res = chif_net_close_socket(&cli_sock);
- printf("close client socket\n");
- res = chif_net_close_socket(&sock);
- printf("close server socket\n");
-
- printf("shutting down");
- chif_net_shutdown(); // needed if on windwos
-
- * @examples
- *
- * Echo client:
-
- chif_net_startup(); // needed if on windwos
-
- printf("~ client ~\n");
-
- chif_net_socket sock;
- chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
- chif_net_address_family fam = CHIF_NET_ADDRESS_FAMILY_IPV4;
- const uint16_t serv_port = 1337;
- const char* serv_ip = "127.0.0.1";
-
- chif_net_result res = chif_net_open_socket(&sock, proto, fam);
- printf("open client socket\nconnecting to %s:%d\n", serv_ip, serv_port);
-
- chif_net_address serv_addr;
- res = chif_net_create_address(&serv_addr, serv_ip, serv_port, fam);
-
- res = chif_net_connect(sock, serv_addr);
- printf("connected\n");
-
- enum buf_size { buf_size = 256 };
- uint8_t buf[buf_size+1]; // +1 allows to null terminate the message for print
- assert(sizeof(char) == sizeof(uint8_t));
- char* msg = "This is a message from the client\n";
- memcpy(buf, msg, 33);
-
- ssize_t sent_bytes;
- res = chif_net_write(sock, buf, buf_size, &sent_bytes);
- printf("wrote %s\n", buf);
-
- ssize_t read_bytes;
- res = chif_net_read(sock, buf, buf_size, &read_bytes);
- buf[read_bytes] = 0;
- printf("read %s\n", buf);
-
- res = chif_net_close_socket(&sock);
-
- printf("shutting down\n");
- chif_net_shutdown(); // needed if on windows
-
-*/
+ * chif_net is a light cross-platform socket library.
+ */
 
 #if defined(__cplusplus)
 extern "C"
@@ -492,7 +404,7 @@ typedef int chif_net_socket;
 
   /**
    *
-   * @param address Pointer to a address struct, example: chif_net_address
+   * @param address Output address
    * server_address{};
    * @param ip_address String representation of ip address "ddd.ddd.ddd.ddd".
    * Example, "127.0.0.1"
@@ -501,7 +413,7 @@ typedef int chif_net_socket;
    * @return
    */
   chif_net_result chif_net_create_address(
-    chif_net_address* address,
+    chif_net_address* address_out,
     const char* ip_address,
     chif_net_port port,
     chif_net_address_family address_family);
@@ -705,7 +617,7 @@ typedef int chif_net_socket;
    * @param seq ICMP sequence, will appear in the echo response.
    * @return If it succeeded
    */
-  chif_net_result chif_net_icmp_build(const uint8_t* buf,
+  chif_net_result chif_net_icmp_build(uint8_t* buf,
                                       size_t* bufsize,
                                       const void* data,
                                       size_t data_size,

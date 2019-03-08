@@ -28,6 +28,10 @@
 
 #include "chif_net.h"
 
+#if defined(CHIF_NET_BERKLEY_SOCKET)
+#include <netdb.h>
+#endif
+
 // ============================================================ //
 // Static functions
 // ============================================================ //
@@ -412,7 +416,10 @@ CHIF_NET_INLINE chif_net_result
 chif_net_connect(chif_net_socket socket, chif_net_address* address)
 {
   const int result =
-    connect(socket, (struct sockaddr*)&address->addr, sizeof(address->addr));
+    connect(socket,
+            (struct sockaddr*)&address->addr,
+            address->addr.ss_family == AF_INET ? sizeof(struct sockaddr_in)
+                                               : sizeof(struct sockaddr_in6));
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -645,7 +652,7 @@ chif_net_set_socket_blocking(chif_net_socket socket, bool blocking)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_create_address(chif_net_address* address,
+chif_net_create_address(chif_net_address* address_out,
                         const char* ip_address,
                         chif_net_port port,
                         chif_net_address_family address_family)
@@ -654,16 +661,16 @@ chif_net_create_address(chif_net_address* address,
   int result;
 
   if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    address->addr.ss_family = AF_INET;
-    struct sockaddr_in* addr_in = (struct sockaddr_in*)(&address->addr);
+    address_out->addr.ss_family = AF_INET;
+    struct sockaddr_in* addr_in = (struct sockaddr_in*)(&address_out->addr);
     result =
-      inet_pton((*address).addr.ss_family, ip_address, &addr_in->sin_addr);
+      inet_pton((*address_out).addr.ss_family, ip_address, &addr_in->sin_addr);
     (*addr_in).sin_port = htons(port);
   } else if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
-    address->addr.ss_family = AF_INET6;
-    struct sockaddr_in6* addr_in6 = (struct sockaddr_in6*)(&address->addr);
-    result =
-      inet_pton((*address).addr.ss_family, ip_address, &addr_in6->sin6_addr);
+    address_out->addr.ss_family = AF_INET6;
+    struct sockaddr_in6* addr_in6 = (struct sockaddr_in6*)(&address_out->addr);
+    result = inet_pton(
+      (*address_out).addr.ss_family, ip_address, &addr_in6->sin6_addr);
     (*addr_in6).sin6_port = htons(port);
   } else {
     return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
@@ -927,7 +934,7 @@ chif_net_set_own_iphdr(chif_net_socket sock, int provide_own_hdr)
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_icmp_build(const uint8_t* buf,
+chif_net_icmp_build(uint8_t* buf,
                     size_t* bufsize,
                     const void* data,
                     size_t data_size,
