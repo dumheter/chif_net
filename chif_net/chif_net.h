@@ -181,7 +181,9 @@ typedef int chif_net_socket;
     CHIF_NET_RESULT_NO_NETWORK,
     CHIF_NET_RESULT_BLOCKING_CANCELED,
     CHIF_NET_RESULT_NET_UNREACHABLE,
-    CHIF_NET_RESULT_BUFSIZE_INVALID
+    CHIF_NET_RESULT_BUFSIZE_INVALID,
+    CHIF_NET_RESULT_NAME_SERVER_FAIL,
+    CHIF_NET_RESLUT_NO_NAME
   } chif_net_result;
 
   typedef enum
@@ -403,7 +405,8 @@ typedef int chif_net_socket;
                                                bool blocking);
 
   /**
-   *
+   * Create an address structure with the exact information. Note, will
+   * not perform DNS lookup for you. For that, use @chif_net_lookup_address.
    * @param address Output address
    * server_address{};
    * @param ip_address String representation of ip address "ddd.ddd.ddd.ddd".
@@ -417,6 +420,22 @@ typedef int chif_net_socket;
     const char* ip_address,
     chif_net_port port,
     chif_net_address_family address_family);
+
+  /**
+   * Find address from information. Will automagically find the address
+   * by doing DNS lookup, etc.
+   * @param address_out Output address
+   * @param name Example, "127.0.0.1" or "www.duckduckgo.com".
+   * @param service Example, "http" or "80".
+   * @param address_family
+   * @param transport_protocol
+   */
+  chif_net_result chif_net_lookup_address(
+      chif_net_address* address_out,
+      const char* name,
+      const char* service,
+      chif_net_address_family address_family,
+      chif_net_protocol transport_protocol);
 
   /*
    * Get the address of a socket.

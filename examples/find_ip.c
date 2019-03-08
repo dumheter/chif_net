@@ -67,9 +67,9 @@ find_LAN_address()
   printf("connecting to Google's DNS\n");
   chif_net_address google_dns_addr;
 #define GOOGLE_DNS_IP "8.8.8.8"
-#define DNS_PORT 53
+  enum { dns_port = 53 };
   ok_or_die(
-    chif_net_create_address(&google_dns_addr, GOOGLE_DNS_IP, DNS_PORT, af));
+    chif_net_create_address(&google_dns_addr, GOOGLE_DNS_IP, dns_port, af));
   ok_or_die(chif_net_connect(sock, &google_dns_addr));
 
   {
@@ -78,6 +78,55 @@ find_LAN_address()
     ok_or_die(chif_net_ip_from_socket(sock, ip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port p;
     ok_or_die(chif_net_port_from_socket(sock, &p));
+    printf("\t%s:%d\n", ip, p);
+  }
+
+  {
+    printf("peer ip and port from address\n");
+    chif_net_address addr;
+    ok_or_die(chif_net_get_peer_address(sock, &addr));
+    char ip[CHIF_NET_IPVX_STRING_LENGTH];
+    ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
+    chif_net_port p;
+    ok_or_die(chif_net_port_from_address(&addr, &p));
+    printf("\t%s:%d\n", ip, p);
+  }
+
+  printf("closing sockets\n");
+  chif_net_close_socket(&sock);
+}
+
+void
+find_hostname_address(const char* site)
+{
+  printf("open socket\n");
+  chif_net_socket sock;
+  const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
+  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  ok_or_die(chif_net_open_socket(&sock, proto, af));
+
+  printf("looking up %s 's ip\n", site);
+  chif_net_address addr;
+  ok_or_die(chif_net_lookup_address(&addr, site, "http", af, proto));
+  ok_or_die(chif_net_connect(sock, &addr));
+
+  {
+    printf("ip and port from socket\n");
+    char ip[CHIF_NET_IPVX_STRING_LENGTH];
+    ok_or_die(chif_net_ip_from_socket(sock, ip, CHIF_NET_IPVX_STRING_LENGTH));
+    chif_net_port p;
+    ok_or_die(chif_net_port_from_socket(sock, &p));
+    printf("\t%s:%d\n", ip, p);
+  }
+
+  {
+    printf("ip and port from address\n");
+    chif_net_address addr;
+    ok_or_die(chif_net_get_address(sock, &addr));
+    char ip[CHIF_NET_IPVX_STRING_LENGTH];
+    ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
+    chif_net_port p;
+    ok_or_die(chif_net_port_from_address(&addr, &p));
     printf("\t%s:%d\n", ip, p);
   }
 
@@ -106,6 +155,10 @@ main(int argc, char** argv)
 
   printf("\n== Find our LAN address\n");
   find_LAN_address();
+
+  const char* site = "www.duckduckgo.com";
+  printf("\n== Find %s 's IP address\n", site);
+  find_hostname_address(site);
 
   printf("exiting\n");
   chif_net_shutdown();

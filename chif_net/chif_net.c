@@ -101,6 +101,17 @@ _chif_net_get_specific_result_type()
     case WSAECONNREFUSED:
       return CHIF_NET_RESULT_CONNECTION_REFUSED;
 
+    case EAI_FAIL:
+    case EAI_AGAIN:
+      return CHIF_NET_RESULT_NAME_SERVER_FAIL;
+
+    case WRA_NOT_ENOUGH_MEMORY:
+    case EAI_MEMORY:
+      return CHIF_NET_RESULT_NO_MEMORY;
+
+    case EAI_NONAME:
+      return CHIF_NET_RESLUT_NO_NAME;
+
     default:
       return CHIF_NET_RESULT_UNKNOWN;
   }
@@ -156,6 +167,7 @@ _chif_net_get_specific_result_type()
       return CHIF_NET_RESULT_CONNECTION_CLOSED;
 
     case EAFNOSUPPORT:
+    case EAI_FAMILY:
       return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
 
     case ENOSPC:
@@ -169,6 +181,7 @@ _chif_net_get_specific_result_type()
 
     case ENOBUFS:
     case ENOMEM:
+    case EAI_MEMORY:
       return CHIF_NET_RESULT_NO_MEMORY;
 
     case EPROTONOSUPPORT:
@@ -179,6 +192,13 @@ _chif_net_get_specific_result_type()
 
     case ENETUNREACH:
       return CHIF_NET_RESULT_NO_NETWORK;
+
+    case EAI_FAIL:
+    case EAI_AGAIN:
+      return CHIF_NET_RESULT_NAME_SERVER_FAIL;
+
+    case EAI_NONAME:
+      return CHIF_NET_RESLUT_NO_NAME;
 
     default:
       return CHIF_NET_RESULT_UNKNOWN;
@@ -598,7 +618,7 @@ chif_net_writeto(chif_net_socket socket,
                                 (int)bufsize,
                                 flag,
                                 (struct sockaddr*)target_addr,
-                                sizeof(struct sockaddr));
+                                sizeof(target_addr->addr));
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
@@ -684,6 +704,45 @@ chif_net_create_address(chif_net_address* address_out,
     }
     return CHIF_NET_RESULT_UNKNOWN;
   }
+
+  return CHIF_NET_RESULT_SUCCESS;
+}
+
+CHIF_NET_INLINE chif_net_result
+chif_net_lookup_address(chif_net_address* address_out,
+                        const char* name,
+                        const char* service,
+                        chif_net_address_family address_family,
+                        chif_net_protocol transport_protocol)
+{
+  struct addrinfo hints, *ai;
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = address_family == CHIF_NET_ADDRESS_FAMILY_IPV4 ?
+                    AF_INET : AF_INET6;
+  hints.ai_socktype = transport_protocol == CHIF_NET_PROTOCOL_TCP ?
+                      SOCK_STREAM : SOCK_DGRAM;
+
+  const int res = getaddrinfo(name, service, &hints, &ai);
+  if (res != 0) {
+    return _chif_net_get_specific_result_type();
+  }
+
+  // TODO do we ever want to look at the other items in @ai?
+
+  switch (ai->ai_family) {
+    case AF_INET: {
+      memcpy(&address_out->addr, ai->ai_addr, sizeof(struct sockaddr_in));
+      break;
+    }
+    case AF_INET6: {
+      memcpy(&address_out->addr, ai->ai_addr, sizeof(struct sockaddr_in6));
+      break;
+    }
+    default:
+      return CHIF_NET_RESULT_FAIL;
+  }
+
+  freeaddrinfo(ai);
 
   return CHIF_NET_RESULT_SUCCESS;
 }
@@ -1045,6 +1104,10 @@ chif_net_result_to_string(chif_net_result result)
       return "NET_UNREACHABLE";
     case CHIF_NET_RESULT_BUFSIZE_INVALID:
       return "CHIF_NET_RESULT_BUFSIZE_INVALID";
+    case CHIF_NET_RESULT_NAME_SERVER_FAIL:
+      return "CHIF_NET_RESULT_NAME_SERVER_FAIL";
+    case CHIF_NET_RESLUT_NO_NAME:
+      return "CHIF_NET_RESLUT_NO_NAME";
   }
 
   // should never happen
