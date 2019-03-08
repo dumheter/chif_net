@@ -460,7 +460,7 @@ chif_net_bind(chif_net_socket socket,
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
 
-  result = bind(socket, (struct sockaddr*)&address.addr, sizeof(address.addr));
+  result = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr));
 
   if (result == CHIF_NET_SOCKET_ERROR)
     return _chif_net_get_specific_result_type();
