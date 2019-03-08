@@ -431,11 +431,11 @@ typedef int chif_net_socket;
    * @param transport_protocol
    */
   chif_net_result chif_net_lookup_address(
-      chif_net_address* address_out,
-      const char* name,
-      const char* service,
-      chif_net_address_family address_family,
-      chif_net_protocol transport_protocol);
+    chif_net_address* address_out,
+    const char* name,
+    const char* service,
+    chif_net_address_family address_family,
+    chif_net_protocol transport_protocol);
 
   /*
    * Get the address of a socket.

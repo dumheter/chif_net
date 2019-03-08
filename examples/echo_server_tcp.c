@@ -30,6 +30,13 @@ main(int argc, char** argv)
   const chif_net_port port = 1337;
   ok_or_die(chif_net_bind(sock, port, af));
 
+  chif_net_port bound_port;
+  ok_or_die(chif_net_port_from_socket(sock, &bound_port));
+  char bound_ip[CHIF_NET_IPVX_STRING_LENGTH];
+  ok_or_die(
+    chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
+  printf("socket bound on %s:%u\n", bound_ip, bound_port);
+
   printf("listen for connection\n");
   ok_or_die(chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
 

@@ -67,7 +67,10 @@ find_LAN_address()
   printf("connecting to Google's DNS\n");
   chif_net_address google_dns_addr;
 #define GOOGLE_DNS_IP "8.8.8.8"
-  enum { dns_port = 53 };
+  enum
+  {
+    dns_port = 53
+  };
   ok_or_die(
     chif_net_create_address(&google_dns_addr, GOOGLE_DNS_IP, dns_port, af));
   ok_or_die(chif_net_connect(sock, &google_dns_addr));

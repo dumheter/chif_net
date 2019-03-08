@@ -453,15 +453,14 @@ chif_net_bind(chif_net_socket socket,
               chif_net_port port,
               chif_net_address_family af)
 {
-  //chif_net_create_address(&address, "0.0.0.0", port, address_family);
-
   chif_net_address address;
   char portstr[6];
   const int pres = sprintf(portstr, "%u", port);
-  if (pres < 0) { return CHIF_NET_RESULT_FAIL; }
+  if (pres < 0) {
+    return CHIF_NET_RESULT_FAIL;
+  }
   const chif_net_result result =
-      chif_net_lookup_address(&address, "localhost", portstr, af,
-                              CHIF_NET_PROTOCOL_TCP);
+    chif_net_lookup_address(&address, NULL, portstr, af, CHIF_NET_PROTOCOL_TCP);
 
   if (result != CHIF_NET_RESULT_SUCCESS) {
     return _chif_net_get_specific_result_type();
@@ -470,15 +469,17 @@ chif_net_bind(chif_net_socket socket,
   int bindres;
   switch (address.addr.ss_family) {
     case AF_INET: {
-      bindres = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in));
+      bindres = bind(
+        socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in));
       break;
     }
     case AF_INET6: {
       // TODO test this
-      bindres = bind(socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in6));
+      bindres = bind(
+        socket, (struct sockaddr*)&address.addr, sizeof(struct sockaddr_in6));
     }
     default: {
-      return CHIF_NET_RESULT_FAIL;
+      return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
     }
   }
 
@@ -561,22 +562,22 @@ chif_net_readfrom(chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  socklen_t srcaddr_size = sizeof(struct sockaddr);
-
   // buflen param is diffrent type in winsock2 lib
 #if defined(CHIF_NET_WINSOCK2)
-  if (bufsize > INT_MAX)
+  if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
+  }
 #define READFROM_BUFSIZE (int)bufsize
 #else
 #define READFROM_BUFSIZE bufsize
 #endif
 
+  socklen_t srcaddr_size = sizeof(struct sockaddr_storage);
   const ssize_t result = recvfrom(socket,
                                   (char*)buf,
                                   READFROM_BUFSIZE,
                                   flag,
-                                  (struct sockaddr*)srcaddr,
+                                  (struct sockaddr*)&srcaddr->addr,
                                   &srcaddr_size);
 #undef READFROM_BUFSIZE
 
@@ -633,18 +634,38 @@ chif_net_writeto(chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = sendto(socket,
-                                (const char*)buf,
-                                (int)bufsize,
-                                flag,
-                                (struct sockaddr*)target_addr,
-                                sizeof(target_addr->addr));
+  ssize_t result;
+  switch (target_addr->addr.ss_family) {
+    case AF_INET: {
+      result = sendto(socket,
+                      (const char*)buf,
+                      (int)bufsize,
+                      flag,
+                      (struct sockaddr*)target_addr,
+                      sizeof(struct sockaddr_in));
+      break;
+    }
+    case AF_INET6: {
+      result = sendto(socket,
+                      (const char*)buf,
+                      (int)bufsize,
+                      flag,
+                      (struct sockaddr*)target_addr,
+                      sizeof(struct sockaddr_in6));
+      break;
+    }
+    default:
+      return CHIF_NET_RESULT_NOT_VALID_ADDRESS_FAMILY;
+  }
 
-  if (result == CHIF_NET_SOCKET_ERROR)
+  if (result == -1) {
     return _chif_net_get_specific_result_type();
+  }
 
-  if (sent_bytes)
+  if (sent_bytes) {
     *sent_bytes = result;
+  }
+
   return CHIF_NET_RESULT_SUCCESS;
 }
 
@@ -737,10 +758,13 @@ chif_net_lookup_address(chif_net_address* address_out,
 {
   struct addrinfo hints, *ai;
   memset(&hints, 0, sizeof(hints));
-  hints.ai_family = address_family == CHIF_NET_ADDRESS_FAMILY_IPV4 ?
-                    AF_INET : AF_INET6;
-  hints.ai_socktype = transport_protocol == CHIF_NET_PROTOCOL_TCP ?
-                      SOCK_STREAM : SOCK_DGRAM;
+  hints.ai_family =
+    address_family == CHIF_NET_ADDRESS_FAMILY_IPV4 ? AF_INET : AF_INET6;
+  hints.ai_socktype =
+    transport_protocol == CHIF_NET_PROTOCOL_TCP ? SOCK_STREAM : SOCK_DGRAM;
+  if (name == NULL) {
+    hints.ai_flags = AI_PASSIVE; // wildcard IP address
+  }
 
   const int res = getaddrinfo(name, service, &hints, &ai);
   if (res != 0) {
