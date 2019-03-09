@@ -1,4 +1,4 @@
-#include "echo_server.h"
+#include "echo.h"
 #include "chif_net.h"
 #include <stdlib.h>
 
@@ -197,6 +197,8 @@ run_client(int argc, char** argv)
 
   DEBUG_PRINTF("closing socket\n");
   chif_net_close_socket(&sock);
+
+  return 0;
 }
 
 #undef OK_OR_DIE

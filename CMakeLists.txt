@@ -20,10 +20,16 @@ set(CHIF_NET_SRC
 set(TESTS_SRC
   tests/alf_test.h
   tests/alf_test.c
+  tests/alf_thread.h
+  tests/alf_thread.c
 
   tests/tests.h
 
   tests/connect.test.c
+  tests/echo.test.c
+
+  examples/echo.c
+  examples/echo.h
   )
 
 
@@ -47,4 +53,7 @@ if (WIN32)
   target_link_libraries(port_scanner ws2_32)
   target_link_libraries(find_ip ws2_32)
   target_link_libraries(tests ws2_32)
+endif ()
+if (CMAKE_COMPILER_IS_GNUCC)
+  target_link_libraries(tests pthread)
 endif ()
