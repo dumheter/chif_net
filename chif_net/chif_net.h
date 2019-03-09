@@ -650,6 +650,16 @@ typedef int chif_net_socket;
    */
   const char* chif_net_result_to_string(chif_net_result result);
 
+  /**
+   * @param af
+   */
+  const char* chif_net_address_family_to_string(chif_net_address_family af);
+
+  /**
+   * @param proto
+   */
+  const char* chif_net_protocol_to_string(chif_net_protocol proto);
+
 #if defined(__cplusplus)
 }
 #endif

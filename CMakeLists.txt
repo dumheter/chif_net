@@ -17,26 +17,34 @@ set(CHIF_NET_SRC
   chif_net/chif_net.h
   )
 
-add_executable(echo_server_tcp examples/echo_server_tcp.c ${CHIF_NET_SRC})
-add_executable(echo_client_tcp examples/echo_client_tcp.c ${CHIF_NET_SRC})
-add_executable(ipv6_echo_server_tcp examples/ipv6_echo_server_tcp.c ${CHIF_NET_SRC})
-add_executable(ipv6_echo_client_tcp examples/ipv6_echo_client_tcp.c ${CHIF_NET_SRC})
-add_executable(echo_server_udp examples/echo_server_udp.c ${CHIF_NET_SRC})
-add_executable(echo_client_udp examples/echo_client_udp.c ${CHIF_NET_SRC})
-add_executable(ipv6_echo_server_udp examples/ipv6_echo_server_udp.c ${CHIF_NET_SRC})
-add_executable(ipv6_echo_client_udp examples/ipv6_echo_client_udp.c ${CHIF_NET_SRC})
+set(TESTS_SRC
+  tests/alf_test.h
+  tests/alf_test.c
+
+  tests/tests.h
+
+  tests/connect.test.c
+  )
+
+
+add_executable(echo_server examples/echo_server_example.c
+  examples/echo.c examples/echo.h ${CHIF_NET_SRC})
+target_compile_definitions(echo_server PRIVATE ECHO_DEBUG_PRINT)
+
+add_executable(echo_client examples/echo_client_example.c
+  examples/echo.c examples/echo.h ${CHIF_NET_SRC})
+target_compile_definitions(echo_client PRIVATE ECHO_DEBUG_PRINT)
+
 add_executable(port_scanner examples/port_scanner.c ${CHIF_NET_SRC})
 add_executable(find_ip examples/find_ip.c ${CHIF_NET_SRC})
+add_executable(tests tests/test.c ${CHIF_NET_SRC} ${TESTS_SRC})
+
+
 
 if (WIN32)
-  target_link_libraries(echo_server_tcp ws2_32)
-  target_link_libraries(echo_client_tcp ws2_32)
-  target_link_libraries(ipv6_echo_server_tcp ws2_32)
-  target_link_libraries(ipv6_echo_client_tcp ws2_32)
-  target_link_libraries(echo_server_udp ws2_32)
-  target_link_libraries(echo_client_udp ws2_32)
-  target_link_libraries(ipv6_echo_server_udp ws2_32)
-  target_link_libraries(ipv6_echo_client_udp ws2_32)
+  target_link_libraries(echo_server ws2_32)
+  target_link_libraries(echo_client ws2_32)
   target_link_libraries(port_scanner ws2_32)
   target_link_libraries(find_ip ws2_32)
+  target_link_libraries(tests ws2_32)
 endif ()

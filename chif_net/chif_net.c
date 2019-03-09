@@ -1180,3 +1180,38 @@ chif_net_result_to_string(chif_net_result result)
   // should never happen
   return "INTERNAL_CHIF_ERROR";
 }
+
+CHIF_NET_INLINE const char*
+chif_net_address_family_to_string(chif_net_address_family af)
+{
+  switch (af) {
+    case CHIF_NET_ADDRESS_FAMILY_IPV4: {
+      return "IPv4";
+    }
+    case CHIF_NET_ADDRESS_FAMILY_IPV6: {
+      return "IPv6";
+    }
+    case CHIF_NET_ADDRESS_FAMILY_UNIX: {
+      return "UNIX";
+    }
+  }
+}
+
+CHIF_NET_INLINE const char*
+chif_net_protocol_to_string(chif_net_protocol proto)
+{
+  switch (proto) {
+    case CHIF_NET_PROTOCOL_TCP: {
+      return "TCP";
+    }
+    case CHIF_NET_PROTOCOL_UDP: {
+      return "UDP";
+    }
+    case CHIF_NET_PROTOCOL_ICMP: {
+      return "ICMP";
+    }
+    case CHIF_NET_PROTOCOL_RAW: {
+      return "RAW";
+    }
+  }
+}
