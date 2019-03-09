@@ -106,7 +106,6 @@ _chif_net_get_specific_result_type()
     case EAI_AGAIN:
       return CHIF_NET_RESULT_NAME_SERVER_FAIL;
 
-    case WRA_NOT_ENOUGH_MEMORY:
     case EAI_MEMORY:
       return CHIF_NET_RESULT_NO_MEMORY;
 
@@ -1194,6 +1193,9 @@ chif_net_address_family_to_string(chif_net_address_family af)
     case CHIF_NET_ADDRESS_FAMILY_UNIX: {
       return "UNIX";
     }
+    default: {
+      return "INVALID INPUT";
+    }
   }
 }
 
@@ -1212,6 +1214,9 @@ chif_net_protocol_to_string(chif_net_protocol proto)
     }
     case CHIF_NET_PROTOCOL_RAW: {
       return "RAW";
+    }
+    default: {
+      return "INVALID INPUT";
     }
   }
 }

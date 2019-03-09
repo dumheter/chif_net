@@ -62,8 +62,8 @@ main()
   };
   AlfTest echo_tests[echo_tests_count];
   echo_tests[0] = (AlfTest){ .name = "tcp & ipv4", .TestFunction = tcp_ipv4 };
-  echo_tests[1] = (AlfTest){ .name = "tcp & ipv6", .TestFunction = tcp_ipv6 };
-  echo_tests[2] = (AlfTest){ .name = "udp & ipv4", .TestFunction = udp_ipv4 };
+  echo_tests[2] = (AlfTest){ .name = "tcp & ipv6", .TestFunction = tcp_ipv6 };
+  echo_tests[1] = (AlfTest){ .name = "udp & ipv4", .TestFunction = udp_ipv4 };
   echo_tests[3] = (AlfTest){ .name = "udp & ipv6", .TestFunction = udp_ipv6 };
   suites[1] = alfCreateTestSuite("Echo", echo_tests, echo_tests_count);
 
