@@ -10,8 +10,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -27,9 +27,9 @@
 
 #if defined(ECHO_DEBUG_PRINT)
 #include <stdio.h>
-# define DEBUG_PRINTF(...) printf(__VA_ARGS__)
+#define DEBUG_PRINTF(...) printf(__VA_ARGS__)
 #else
-# define DEBUG_PRINTF(...)
+#define DEBUG_PRINTF(...)
 #endif
 
 /**
@@ -44,4 +44,4 @@ run_server(int argc, char** argv);
 int
 run_client(int argc, char** argv);
 
-#endif//ECHO_H_
+#endif // ECHO_H_

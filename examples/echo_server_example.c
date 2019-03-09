@@ -1,5 +1,5 @@
-#include "echo.h"
 #include "chif_net.h"
+#include "echo.h"
 #include <stdio.h>
 
 int

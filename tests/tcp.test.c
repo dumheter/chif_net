@@ -10,8 +10,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -22,11 +22,12 @@
  * SOFTWARE.
  */
 
-#include "tests.h"
 #include "chif_net.h"
+#include "tests.h"
 #include <stdlib.h>
 
-void run_echo_server(AlfTestState* state)
+void
+run_echo_server(AlfTestState* state)
 {
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;

@@ -2,14 +2,14 @@
 #include "chif_net.h"
 #include <stdlib.h>
 
-#define OK_OR_DIE(fn)                                   \
-  {                                                     \
-    const chif_net_result res = (fn);                   \
-    if (res != CHIF_NET_RESULT_SUCCESS) {               \
-      DEBUG_PRINTF("failed with error [%s]\n",          \
-                   chif_net_result_to_string(res));     \
-      return -1;                                        \
-    }                                                   \
+#define OK_OR_DIE(fn)                                                          \
+  {                                                                            \
+    const chif_net_result res = (fn);                                          \
+    if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
+      DEBUG_PRINTF("failed with error [%s]\n",                                 \
+                   chif_net_result_to_string(res));                            \
+      return -1;                                                               \
+    }                                                                          \
   }
 
 int
@@ -24,7 +24,9 @@ run_server(int argc, char** argv)
     if ((char)argv[i][0] == '-') {
       switch (argv[i][1]) {
         case 'p': { // PORT
-          if (i+1 < argc) { port = atoi(argv[i+1]); }
+          if (i + 1 < argc) {
+            port = atoi(argv[i + 1]);
+          }
           break;
         }
         case '6': { // IPv6
@@ -60,7 +62,7 @@ run_server(int argc, char** argv)
   OK_OR_DIE(chif_net_port_from_socket(sock, &bound_port));
   char bound_ip[CHIF_NET_IPVX_STRING_LENGTH];
   OK_OR_DIE(
-      chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
+    chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
   DEBUG_PRINTF("socket bound on [%s:%u]\n", bound_ip, bound_port);
 
   chif_net_socket clisock;
@@ -75,7 +77,7 @@ run_server(int argc, char** argv)
     char cliip[CHIF_NET_IPVX_STRING_LENGTH];
     chif_net_port cliport;
     OK_OR_DIE(
-        chif_net_ip_from_address(&cliaddr, cliip, CHIF_NET_IPVX_STRING_LENGTH));
+      chif_net_ip_from_address(&cliaddr, cliip, CHIF_NET_IPVX_STRING_LENGTH));
     OK_OR_DIE(chif_net_port_from_address(&cliaddr, &cliport));
     DEBUG_PRINTF("client connected from %s:%d\n", cliip, cliport);
   }
@@ -93,17 +95,16 @@ run_server(int argc, char** argv)
       DEBUG_PRINTF("read [%s], echoing it back.\n", (char*)buf);
       chif_net_write(clisock, buf, (size_t)bytes, &bytes);
     }
-  }
-  else {
+  } else {
     OK_OR_DIE(chif_net_readfrom(sock, buf, bufsize, &bytes, &cliaddr));
 
     char srcip[CHIF_NET_IPVX_STRING_LENGTH];
     OK_OR_DIE(
-        chif_net_ip_from_address(&cliaddr, srcip, CHIF_NET_IPVX_STRING_LENGTH));
+      chif_net_ip_from_address(&cliaddr, srcip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port srcport;
     OK_OR_DIE(chif_net_port_from_address(&cliaddr, &srcport));
-    DEBUG_PRINTF("read [%s] from [%s:%d], echoing it back.\n",
-                 (char*)buf, srcip, srcport);
+    DEBUG_PRINTF(
+      "read [%s] from [%s:%d], echoing it back.\n", (char*)buf, srcip, srcport);
 
     OK_OR_DIE(chif_net_writeto(sock, buf, (size_t)bytes, &bytes, &cliaddr));
   }
@@ -128,7 +129,9 @@ run_client(int argc, char** argv)
     if ((char)argv[i][0] == '-') {
       switch (argv[i][1]) {
         case 'p': { // PORT
-          if (i+1 < argc) { port = atoi(argv[i+1]); }
+          if (i + 1 < argc) {
+            port = atoi(argv[i + 1]);
+          }
           break;
         }
         case '6': { // IPv6
@@ -148,13 +151,17 @@ run_client(int argc, char** argv)
           break;
         }
         case 'h': { // HOSTNAME,  "127.0.0.1" or "duckduckgo.com"
-          if (i+1 < argc) { ip = argv[i+1]; }
+          if (i + 1 < argc) {
+            ip = argv[i + 1];
+          }
           break;
         }
       }
     }
   }
-  if (!ip) { ip = "localhost"; }
+  if (!ip) {
+    ip = "localhost";
+  }
 
   DEBUG_PRINTF("open socket with protocol [%s], address family [%s]\n",
                chif_net_protocol_to_string(proto),
