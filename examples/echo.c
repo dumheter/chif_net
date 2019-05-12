@@ -1,7 +1,7 @@
 #include "echo.h"
 #include "chif_net.h"
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define OK_OR_DIE(fn)                                                          \
   {                                                                            \

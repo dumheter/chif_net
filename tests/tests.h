@@ -25,7 +25,7 @@
 #ifndef TEST_H_
 #define TEST_H_
 
-#include "alf_test.h"
+#include <alf_test.h>
 
 // ============================================================ //
 // connect

@@ -81,6 +81,10 @@ extern "C"
 #include <stdint.h>
 #include <string.h>
 
+  // ====================================================================== //
+  // Macros
+  // ====================================================================== //
+
 /**
  * Only linux allows for some more advanced tcp setting.
  **/
@@ -93,10 +97,6 @@ extern "C"
 // Inline
 //# define CHIF_NET_INLINE inline
 #define CHIF_NET_INLINE
-
-  // ====================================================================== //
-  // Macros
-  // ====================================================================== //
 
 #if defined(CHIF_NET_WINSOCK2)
 // Invalid socket value
