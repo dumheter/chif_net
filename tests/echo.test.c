@@ -22,106 +22,168 @@
  * SOFTWARE.
  */
 
-#include "../examples/echo.h"
-#include "alf_thread.h"
-#include "chif_net.h"
 #include "tests.h"
+#include <chif_net.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
-struct Args
+typedef struct
 {
-  int argc;
-  char** argv;
-};
+  chif_net_address_family af;
+  chif_net_transport_protocol proto;
+  chif_net_port port;
+  const char* addr;
+} echo_args;
 
-uint32_t
-server_helper(void* args)
+#define OK_OR_RET(fn)                                                          \
+  {                                                                            \
+    const chif_net_result res = fn;                                            \
+    ALF_CHECK_TRUE(state, res == CHIF_NET_RESULT_SUCCESS);                            \
+    if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
+      printf("[chif_net] error [%s]", chif_net_result_to_string(res));         \
+      return 1;                                                                \
+    }                                                                          \
+  }
+
+int
+run_echo_test(AlfTestState* state, const echo_args* args)
 {
-  uint32_t res =
-    run_server(((struct Args*)args)->argc, ((struct Args*)args)->argv);
-  return res;
+  char portstr[6];
+  sprintf(portstr, "%u%c", args->port, '\0');
+
+  chif_net_socket server;
+  OK_OR_RET(chif_net_open_socket(&server, args->proto, args->af));
+  OK_OR_RET(chif_net_set_reuse_port(server, CHIF_NET_TRUE));
+
+  chif_net_any_address server_addr;
+  OK_OR_RET(chif_net_create_address((chif_net_address*)&server_addr, CHIF_NET_ANY_ADDRESS, portstr, args->af, args->proto));
+
+  OK_OR_RET(chif_net_bind(server, (chif_net_address*)&server_addr));
+
+  if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
+    OK_OR_RET(chif_net_listen(server, CHIF_NET_DEFAULT_BACKLOG));
+  }
+
+  chif_net_socket client;
+  OK_OR_RET(chif_net_open_socket(&client, args->proto, args->af));
+  OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
+
+  chif_net_any_address client_addr;
+  OK_OR_RET(chif_net_create_address((chif_net_address*)&client_addr,
+                                    args->addr,
+                                    portstr,
+                                    args->af,
+                                    args->proto));
+
+  OK_OR_RET(chif_net_connect(client, (chif_net_address*)&client_addr));
+
+  chif_net_socket server_client = CHIF_NET_INVALID_SOCKET;
+  if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
+    int can_read;
+    OK_OR_RET(chif_net_can_read(server, &can_read, 50));
+    OK_OR_RET(can_read == CHIF_NET_TRUE);
+
+    chif_net_any_address unused;
+    OK_OR_RET(chif_net_accept(server, (chif_net_address*)&unused, &server_client));
+  }
+
+  enum { buflen = 17 };
+  char buf[buflen] = "this is a message";
+  ssize_t bytes;
+  OK_OR_RET(chif_net_write(client, (uint8_t*)buf, buflen, &bytes));
+  OK_OR_RET(buflen == bytes)
+
+  enum { inbuflen = 20};
+  char inbuf[inbuflen];
+  ssize_t inbytes = 0;
+  int can_read = 0;
+  chif_net_socket* cli = args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ?
+                        &server_client : &server;
+  OK_OR_RET(chif_net_can_read(*cli, &can_read, 50));
+  OK_OR_RET(can_read == CHIF_NET_TRUE);
+  chif_net_any_address from_addr;
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(from_addr);
+  if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
+    OK_OR_RET(chif_net_read(*cli, (uint8_t*)inbuf, inbuflen, &inbytes));
+  }
+  else {
+    OK_OR_RET(chif_net_readfrom(*cli, (uint8_t*)inbuf, inbuflen, &inbytes, (chif_net_address*)&from_addr));
+  }
+  OK_OR_RET(inbytes == bytes);
+  OK_OR_RET(memcmp(buf, inbuf, inbytes) == 0);
+
+  ssize_t bytes2;
+  if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
+    OK_OR_RET(chif_net_write(*cli, (uint8_t*)inbuf, inbytes, &bytes2));
+  }
+  else {
+    OK_OR_RET(chif_net_writeto(*cli, (uint8_t*)inbuf, inbytes, &bytes2, (const chif_net_address*)&from_addr));
+  }
+  OK_OR_RET(bytes2 == inbytes);
+
+  ssize_t inbytes2;
+  OK_OR_RET(chif_net_can_read(client, &can_read, 50));
+  OK_OR_RET(can_read == CHIF_NET_TRUE);
+  OK_OR_RET(chif_net_read(client, (uint8_t*)buf, buflen, &inbytes2));
+  OK_OR_RET(inbytes2 == bytes2);
+  OK_OR_RET(memcmp(buf, inbuf, inbytes2) == 0);
+
+  OK_OR_RET(chif_net_close_socket(&server));
+  OK_OR_RET(chif_net_close_socket(&client));
+  OK_OR_RET(chif_net_close_socket(cli));
+
+  return 0;
 }
 
 void
 tcp_ipv4(AlfTestState* state)
 {
-  char* server_argv[] = { "IGNORED", "-t", "-4", "-p", "1337" };
-  struct Args args = (struct Args){ 5, server_argv };
-  AlfThread* server_thread = alfCreateThread(server_helper, (void*)&args);
+  echo_args args;
+  args.af = CHIF_NET_ADDRESS_FAMILY_IPV4;
+  args.proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
+  args.port = 1337;
+  args.addr = "localhost";
 
-  char* argv[] = { "IGNORED", "-t", "-4", "-p", "1337", "-i", "localhost" };
-  const int argc = 7;
-  int client_res = run_client(argc, argv);
-  ALF_CHECK_TRUE(state, client_res == 0);
-
-  uint32_t server_res = -1;
-  if (client_res == 0) {
-    server_res = alfJoinThread(server_thread);
-  } else {
-    alfKillThread(server_thread);
-  }
-  ALF_CHECK_TRUE(state, server_res == 0);
+  const int result = run_echo_test(state, &args);
+  ALF_CHECK_TRUE(state, result == 0);
 }
 
 void
 tcp_ipv6(AlfTestState* state)
 {
-  char* server_argv[] = { "IGNORED", "-t", "-6", "-p", "1337" };
-  struct Args args = (struct Args){ 5, server_argv };
-  AlfThread* server_thread = alfCreateThread(server_helper, (void*)&args);
+  echo_args args;
+  args.af = CHIF_NET_ADDRESS_FAMILY_IPV6;
+  args.proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
+  args.port = 1338;
+  args.addr = "localhost";
 
-  char* argv[] = { "IGNORED", "-t", "-6", "-p", "1337", "-i", "localhost" };
-  const int argc = 7;
-  int client_res = run_client(argc, argv);
-  ALF_CHECK_TRUE(state, client_res == 0);
-
-  uint32_t server_res = -1;
-  if (client_res == 0) {
-    server_res = alfJoinThread(server_thread);
-  } else {
-    alfKillThread(server_thread);
-  }
-  ALF_CHECK_TRUE(state, server_res == 0);
+  const int result = run_echo_test(state, &args);
+  ALF_CHECK_TRUE(state, result == 0);
 }
 
 void
 udp_ipv4(AlfTestState* state)
 {
-  char* server_argv[] = { "IGNORED", "-u", "-4", "-p", "1337" };
-  struct Args args = (struct Args){ 5, server_argv };
-  AlfThread* server_thread = alfCreateThread(server_helper, (void*)&args);
+  echo_args args;
+  args.af = CHIF_NET_ADDRESS_FAMILY_IPV4;
+  args.proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
+  args.port = 1339;
+  args.addr = "localhost";
 
-  char* argv[] = { "IGNORED", "-u", "-4", "-p", "1337", "-i", "localhost" };
-  const int argc = 7;
-  int client_res = run_client(argc, argv);
-  ALF_CHECK_TRUE(state, client_res == 0);
-
-  uint32_t server_res = -1;
-  if (client_res == 0) {
-    server_res = alfJoinThread(server_thread);
-  } else {
-    alfKillThread(server_thread);
-  }
-  ALF_CHECK_TRUE(state, server_res == 0);
+  const int result = run_echo_test(state, &args);
+  ALF_CHECK_TRUE(state, result == 0);
 }
 
 void
 udp_ipv6(AlfTestState* state)
 {
-  char* server_argv[] = { "IGNORED", "-u", "-6", "-p", "1337" };
-  struct Args args = (struct Args){ 5, server_argv };
-  AlfThread* server_thread = alfCreateThread(server_helper, (void*)&args);
+  echo_args args;
+  args.af = CHIF_NET_ADDRESS_FAMILY_IPV6;
+  args.proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
+  args.port = 1340;
+  args.addr = "localhost";
 
-  char* argv[] = { "IGNORED", "-u", "-6", "-p", "1337", "-i", "localhost" };
-  const int argc = 7;
-  int client_res = run_client(argc, argv);
-  ALF_CHECK_TRUE(state, client_res == 0);
-
-  uint32_t server_res = -1;
-  if (client_res == 0) {
-    server_res = alfJoinThread(server_thread);
-  } else {
-    alfKillThread(server_thread);
-  }
-  ALF_CHECK_TRUE(state, server_res == 0);
+  const int result = run_echo_test(state, &args);
+  ALF_CHECK_TRUE(state, result == 0);
 }

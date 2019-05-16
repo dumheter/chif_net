@@ -1,4 +1,4 @@
-#include "chif_net.h"
+#include <chif_net.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -21,12 +21,14 @@ find_server_bind_address()
   printf("open socket\n");
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
 
   printf("bind socket\n");
-  const chif_net_port port = CHIF_NET_UNUSED_PORT;
-  ok_or_die(chif_net_bind(sock, port, af));
+  chif_net_address bind_addr;
+  ok_or_die(chif_net_create_address(
+    &bind_addr, "localhost", CHIF_NET_ANY_PORT, af, proto));
+  ok_or_die(chif_net_bind(sock, &bind_addr));
 
   printf("listen for connection\n");
   ok_or_die(chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
@@ -43,7 +45,7 @@ find_server_bind_address()
   {
     printf("ip and port from address\n");
     chif_net_address addr;
-    ok_or_die(chif_net_get_address(sock, &addr));
+    ok_or_die(chif_net_address_from_socket(sock, &addr));
     char ip[CHIF_NET_IPVX_STRING_LENGTH];
     ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port p;
@@ -61,19 +63,18 @@ find_LAN_address()
   printf("open socket\n");
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
 
   printf("connecting to Google's DNS\n");
-  chif_net_address google_dns_addr;
+  chif_net_any_address google_dns_addr;
 #define GOOGLE_DNS_IP "8.8.8.8"
-  enum
-  {
-    dns_port = 53
-  };
-  ok_or_die(
-    chif_net_create_address(&google_dns_addr, GOOGLE_DNS_IP, dns_port, af));
-  ok_or_die(chif_net_connect(sock, &google_dns_addr));
+
+  const char* dns_port = "53";
+
+  ok_or_die(chif_net_create_address(
+    (chif_net_address*)&google_dns_addr, GOOGLE_DNS_IP, dns_port, af, proto));
+  ok_or_die(chif_net_connect(sock, (chif_net_address*)&google_dns_addr));
 
   {
     printf("ip and port from socket\n");
@@ -87,7 +88,7 @@ find_LAN_address()
   {
     printf("peer ip and port from address\n");
     chif_net_address addr;
-    ok_or_die(chif_net_get_peer_address(sock, &addr));
+    ok_or_die(chif_net_peer_address_from_socket(sock, &addr));
     char ip[CHIF_NET_IPVX_STRING_LENGTH];
     ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port p;
@@ -105,12 +106,12 @@ find_hostname_address(const char* site)
   printf("open socket\n");
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
 
   printf("looking up %s 's ip\n", site);
   chif_net_address addr;
-  ok_or_die(chif_net_lookup_address(&addr, site, "http", af, proto));
+  ok_or_die(chif_net_create_address(&addr, site, "http", af, proto));
   ok_or_die(chif_net_connect(sock, &addr));
 
   {
@@ -125,7 +126,7 @@ find_hostname_address(const char* site)
   {
     printf("ip and port from address\n");
     chif_net_address addr;
-    ok_or_die(chif_net_get_address(sock, &addr));
+    ok_or_die(chif_net_address_from_socket(sock, &addr));
     char ip[CHIF_NET_IPVX_STRING_LENGTH];
     ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port p;
@@ -136,7 +137,7 @@ find_hostname_address(const char* site)
   {
     printf("peer ip and port from address\n");
     chif_net_address addr;
-    ok_or_die(chif_net_get_peer_address(sock, &addr));
+    ok_or_die(chif_net_peer_address_from_socket(sock, &addr));
     char ip[CHIF_NET_IPVX_STRING_LENGTH];
     ok_or_die(chif_net_ip_from_address(&addr, ip, CHIF_NET_IPVX_STRING_LENGTH));
     chif_net_port p;

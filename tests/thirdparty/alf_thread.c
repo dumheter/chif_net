@@ -609,8 +609,8 @@ alfJoinThreadTry(AlfThread* thread, uint32_t* exitCodeOut)
   /* int result = pthread_tryjoin_np(thread->handle, &result); */
   /* if (result == EBUSY) */
   /* { */
-  /* 	*exitCodeOut = 0; */
-  /* 	return ALF_FALSE; */
+  /*   exitCodeOut = 0; */
+  /*   return ALF_FALSE; */
   /* } */
   /* exitCode = (uint32_t)((uint64_t)result); */
 #endif

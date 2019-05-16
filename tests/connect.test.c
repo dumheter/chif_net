@@ -22,16 +22,17 @@
  * SOFTWARE.
  */
 
-#include "chif_net.h"
 #include "tests.h"
+#include <chif_net.h>
 #include <stdlib.h>
+#include <string.h>
 
 void
 duckduckgo(AlfTestState* state)
 {
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   ALF_CHECK_TRUE(
     state, CHIF_NET_RESULT_SUCCESS == chif_net_open_socket(&sock, proto, af));
 
@@ -39,7 +40,7 @@ duckduckgo(AlfTestState* state)
   chif_net_address addr;
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_lookup_address(&addr, site, "http", af, proto));
+                   chif_net_create_address(&addr, site, "http", af, proto));
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS == chif_net_connect(sock, &addr));
 
@@ -83,20 +84,12 @@ duckduckgo(AlfTestState* state)
 void
 bad_site(AlfTestState* state)
 {
-  chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  const chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
-  ALF_CHECK_TRUE(
-    state, CHIF_NET_RESULT_SUCCESS == chif_net_open_socket(&sock, proto, af));
-
+  const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   const char* site = "no site";
   chif_net_address addr;
   ALF_CHECK_FALSE_R(state,
                     CHIF_NET_RESULT_SUCCESS ==
-                      chif_net_lookup_address(&addr, site, "http", af, proto),
+                      chif_net_create_address(&addr, site, "http", af, proto),
                     "attempting to lookup address no site");
-  ALF_CHECK_FALSE(state,
-                  CHIF_NET_RESULT_SUCCESS == chif_net_connect(sock, &addr));
-
-  chif_net_close_socket(&sock);
 }

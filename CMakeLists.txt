@@ -9,15 +9,19 @@ if (MSVC)
   set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
 endif ()
 
-include_directories(chif_net)
-include_directories(SYSTEM tests/thirdparty)
+include_directories(SYSTEM chif_net)
+
+if (CHIF_NET_BUILD_EXTRA)
+  include_directories(SYSTEM tests/thirdparty)
+endif ()
 
 set(CHIF_NET_SRC
   chif_net/chif_net.c
   chif_net/chif_net.h
   )
 
-set(TESTS_SRC
+if (CHIF_NET_BUILD_EXTRA)
+set(EXTRA_SRC
   tests/thirdparty/alf_test.h
   tests/thirdparty/alf_test.c
   tests/thirdparty/alf_thread.h
@@ -28,27 +32,34 @@ set(TESTS_SRC
   tests/echo.test.c
   examples/echo.c
   examples/echo.h
-)
+  )
+endif ()
 
-add_executable(echo_server examples/echo_server_example.c
-  examples/echo.c examples/echo.h ${CHIF_NET_SRC})
-target_compile_definitions(echo_server PRIVATE ECHO_DEBUG_PRINT)
+add_library(${PROJECT_NAME} STATIC ${CHIF_NET_SRC})
 
-add_executable(echo_client examples/echo_client_example.c
-  examples/echo.c examples/echo.h ${CHIF_NET_SRC})
-target_compile_definitions(echo_client PRIVATE ECHO_DEBUG_PRINT)
-
-add_executable(port_scanner examples/port_scanner.c ${CHIF_NET_SRC})
-add_executable(find_ip examples/find_ip.c ${CHIF_NET_SRC})
-add_executable(tests tests/test.c ${CHIF_NET_SRC} ${TESTS_SRC})
+if (CHIF_NET_BUILD_EXTRA)
+  add_executable(echo_server examples/echo_server_example.c examples/echo.c)
+  target_compile_definitions(echo_server PRIVATE ECHO_DEBUG_PRINT)
+  add_executable(echo_client examples/echo_client_example.c examples/echo.c)
+  target_compile_definitions(echo_client PRIVATE ECHO_DEBUG_PRINT)
+  add_executable(find_ip examples/find_ip.c)
+  add_executable(tests tests/test.c ${CHIF_NET_SRC} ${EXTRA_SRC})
+endif ()
 
 if (WIN32)
-  target_link_libraries(echo_server ws2_32)
-  target_link_libraries(echo_client ws2_32)
-  target_link_libraries(port_scanner ws2_32)
-  target_link_libraries(find_ip ws2_32)
-  target_link_libraries(tests ws2_32)
+  target_link_libraries(${PROJECT_NAME} ws2_32)
+  if (CHIF_NET_BUILD_EXTRA)
+    target_link_libraries(echo_server chif_net ws2_32)
+    target_link_libraries(echo_client chif_net ws2_32)
+    target_link_libraries(find_ip chif_net ws2_32)
+    target_link_libraries(tests chif_net ws2_32)
+  endif ()
 endif ()
 if (CMAKE_COMPILER_IS_GNUCC)
-  target_link_libraries(tests pthread)
+  if (CHIF_NET_BUILD_EXTRA)
+    target_link_libraries(echo_server chif_net)
+    target_link_libraries(echo_client chif_net)
+    target_link_libraries(find_ip chif_net)
+    target_link_libraries(tests chif_net pthread)
+  endif ()
 endif ()

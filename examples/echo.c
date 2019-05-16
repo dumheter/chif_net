@@ -1,5 +1,29 @@
+/**
+ * MIT License
+ *
+ * Copyright (c) 2019 Christoffer Gustafsson
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 #include "echo.h"
-#include "chif_net.h"
+#include <chif_net.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,15 +34,15 @@
       DEBUG_PRINTF("failed with error [%s]\n",                                 \
                    chif_net_result_to_string(res));                            \
       return -1;                                                               \
-    }                                                                          \
-  }
+    }                                                                   \
+}
 
 int
 run_server(int argc, char** argv)
 {
   // parse settings, if any
   chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   chif_net_port port = 1337;
   int i = 0;
   while (++i < argc) {
@@ -39,11 +63,11 @@ run_server(int argc, char** argv)
           break;
         }
         case 't': { // TCP
-          proto = CHIF_NET_PROTOCOL_TCP;
+          proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
           break;
         }
         case 'u': { // UDP
-          proto = CHIF_NET_PROTOCOL_UDP;
+          proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
           break;
         }
       }
@@ -51,13 +75,19 @@ run_server(int argc, char** argv)
   }
 
   DEBUG_PRINTF("open socket with protocol [%s], address family [%s]\n",
-               chif_net_protocol_to_string(proto),
+               chif_net_transport_protocol_to_string(proto),
                chif_net_address_family_to_string(af));
   chif_net_socket sock;
   OK_OR_DIE(chif_net_open_socket(&sock, proto, af));
 
-  DEBUG_PRINTF("bind socket on port [%u]\n", port);
-  OK_OR_DIE(chif_net_bind(sock, port, af));
+  char portstr[6];
+  sprintf(portstr, "%u%c", port, '\0');
+  DEBUG_PRINTF("bind socket on port [%s]\n", portstr);
+  chif_net_any_address bindaddr;
+
+  OK_OR_DIE(chif_net_create_address(
+    (chif_net_address*)&bindaddr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
+  OK_OR_DIE(chif_net_bind(sock, (chif_net_address*)&bindaddr));
 
   chif_net_port bound_port;
   OK_OR_DIE(chif_net_port_from_socket(sock, &bound_port));
@@ -68,7 +98,7 @@ run_server(int argc, char** argv)
 
   chif_net_socket clisock;
   chif_net_address cliaddr;
-  if (proto == CHIF_NET_PROTOCOL_TCP) {
+  if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     DEBUG_PRINTF("listen for connection\n");
     OK_OR_DIE(chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
 
@@ -90,9 +120,9 @@ run_server(int argc, char** argv)
   };
   uint8_t buf[bufsize];
   ssize_t bytes;
-  if (proto == CHIF_NET_PROTOCOL_TCP) {
+  if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     while (chif_net_read(clisock, buf, bufsize, &bytes) ==
-           CHIF_NET_RESULT_SUCCESS) {
+           CHIF_NET_RESULT_SUCCESS && bytes > 0) {
       DEBUG_PRINTF("read [%s], echoing it back.\n", (char*)buf);
       chif_net_write(clisock, buf, (size_t)bytes, &bytes);
     }
@@ -122,7 +152,7 @@ run_client(int argc, char** argv)
 {
   // parse settings, if any
   chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
-  chif_net_protocol proto = CHIF_NET_PROTOCOL_TCP;
+  chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   chif_net_port port = 1337;
   char* ip = NULL;
   int i = 0;
@@ -144,11 +174,11 @@ run_client(int argc, char** argv)
           break;
         }
         case 't': { // TCP
-          proto = CHIF_NET_PROTOCOL_TCP;
+          proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
           break;
         }
         case 'u': { // UDP
-          proto = CHIF_NET_PROTOCOL_UDP;
+          proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
           break;
         }
         case 'h': { // HOSTNAME,  "127.0.0.1" or "duckduckgo.com"
@@ -165,7 +195,7 @@ run_client(int argc, char** argv)
   }
 
   DEBUG_PRINTF("open socket with protocol [%s], address family [%s]\n",
-               chif_net_protocol_to_string(proto),
+               chif_net_transport_protocol_to_string(proto),
                chif_net_address_family_to_string(af));
   chif_net_socket sock;
   OK_OR_DIE(chif_net_open_socket(&sock, proto, af));
@@ -173,8 +203,8 @@ run_client(int argc, char** argv)
   DEBUG_PRINTF("create address [%s:%u]\n", ip, port);
   chif_net_address addr;
   char portstr[6];
-  sprintf(portstr, "%u", port);
-  OK_OR_DIE(chif_net_lookup_address(&addr, ip, portstr, af, proto));
+  sprintf(portstr, "%u%c", port, '\0');
+  OK_OR_DIE(chif_net_create_address(&addr, ip, portstr, af, proto));
 
   DEBUG_PRINTF("connecting..\n");
   OK_OR_DIE(chif_net_connect(sock, &addr));
@@ -200,6 +230,9 @@ run_client(int argc, char** argv)
   };
   uint8_t buf[bufsize];
   ssize_t bytes;
+  int can_read;
+  chif_net_can_read(sock, &can_read, 100);
+  OK_OR_DIE(can_read == CHIF_NET_TRUE);
   OK_OR_DIE(chif_net_read(sock, buf, bufsize, &bytes));
   DEBUG_PRINTF("read [%s]\n", (char*)buf);
 

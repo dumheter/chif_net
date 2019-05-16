@@ -23,10 +23,10 @@
  */
 
 #define ALF_TEST_THEME_AUTUMN_FRUIT
-#include "alf_test.h"
-#include "alf_thread.h"
-#include "chif_net.h"
 #include "tests.h"
+#include <alf_test.h>
+#include <alf_thread.h>
+#include <chif_net.h>
 
 int
 main()
