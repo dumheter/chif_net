@@ -24,8 +24,8 @@
 
 #include "tests.h"
 #include <chif_net.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct
@@ -39,7 +39,7 @@ typedef struct
 #define OK_OR_RET(fn)                                                          \
   {                                                                            \
     const chif_net_result res = fn;                                            \
-    ALF_CHECK_TRUE(state, res == CHIF_NET_RESULT_SUCCESS);                            \
+    ALF_CHECK_TRUE(state, res == CHIF_NET_RESULT_SUCCESS);                     \
     if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
       printf("[chif_net] error [%s]", chif_net_result_to_string(res));         \
       return 1;                                                                \
@@ -61,7 +61,11 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
 
   chif_net_any_address server_addr;
-  OK_OR_RET(chif_net_create_address((chif_net_address*)&server_addr, CHIF_NET_ANY_ADDRESS, portstr, args->af, args->proto));
+  OK_OR_RET(chif_net_create_address((chif_net_address*)&server_addr,
+                                    CHIF_NET_ANY_ADDRESS,
+                                    portstr,
+                                    args->af,
+                                    args->proto));
 
   OK_OR_RET(chif_net_bind(server, (chif_net_address*)&server_addr));
 
@@ -89,30 +93,40 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(can_read == CHIF_NET_TRUE);
 
     chif_net_any_address unused;
-    OK_OR_RET(chif_net_accept(server, (chif_net_address*)&unused, &server_client));
+    OK_OR_RET(
+      chif_net_accept(server, (chif_net_address*)&unused, &server_client));
   }
 
-  enum { buflen = 18 };
+  enum
+  {
+    buflen = 18
+  };
   char buf[buflen] = "this is a message";
   int bytes;
   OK_OR_RET(chif_net_write(client, (uint8_t*)buf, buflen, &bytes));
   OK_OR_RET(buflen == bytes)
 
-  enum { inbuflen = 20};
+  enum
+  {
+    inbuflen = 20
+  };
   char inbuf[inbuflen];
   int inbytes = 0;
   int can_read = 0;
-  chif_net_socket* cli = args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ?
-                        &server_client : &server;
+  chif_net_socket* cli =
+    args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ? &server_client : &server;
   OK_OR_RET(chif_net_can_read(*cli, &can_read, 50));
   OK_OR_RET(can_read == CHIF_NET_TRUE);
   chif_net_any_address from_addr;
   CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(from_addr);
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_read(*cli, (uint8_t*)inbuf, inbuflen, &inbytes));
-  }
-  else {
-    OK_OR_RET(chif_net_readfrom(*cli, (uint8_t*)inbuf, inbuflen, &inbytes, (chif_net_address*)&from_addr));
+  } else {
+    OK_OR_RET(chif_net_readfrom(*cli,
+                                (uint8_t*)inbuf,
+                                inbuflen,
+                                &inbytes,
+                                (chif_net_address*)&from_addr));
   }
   OK_OR_RET(inbytes == bytes);
   OK_OR_RET(memcmp(buf, inbuf, inbytes) == 0);
@@ -120,9 +134,12 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   int bytes2;
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_write(*cli, (uint8_t*)inbuf, inbytes, &bytes2));
-  }
-  else {
-    OK_OR_RET(chif_net_writeto(*cli, (uint8_t*)inbuf, inbytes, &bytes2, (const chif_net_address*)&from_addr));
+  } else {
+    OK_OR_RET(chif_net_writeto(*cli,
+                               (uint8_t*)inbuf,
+                               inbytes,
+                               &bytes2,
+                               (const chif_net_address*)&from_addr));
   }
   OK_OR_RET(bytes2 == inbytes);
 

@@ -298,13 +298,16 @@ _chif_net_setsockopt(chif_net_socket socket,
  * @return The result of the syscall translated into chif_net_result types.
  */
 static CHIF_NET_INLINE chif_net_result
-_chif_net_poll(const chif_net_socket socket, int* res_out, const short events, const int timeout_ms)
+_chif_net_poll(const chif_net_socket socket,
+               int* res_out,
+               const short events,
+               const int timeout_ms)
 {
   struct pollfd pfd;
   pfd.fd = socket;
   pfd.events = events;
   pfd.revents = 0;
-  const nfds_t fds_count= 1;
+  const nfds_t fds_count = 1;
 
 #if defined(CHIF_NET_WINSOCK2)
   int pres = WSAPoll(&pfd, fds_count, timeout_ms);
@@ -347,11 +350,12 @@ _chif_net_size_from_address(const chif_net_address* address)
   return addrlen;
 }
 
-  // ====================================================================== //
-  // Implementation
-  // ====================================================================== //
+// ====================================================================== //
+// Implementation
+// ====================================================================== //
 
-  CHIF_NET_INLINE chif_net_result chif_net_startup()
+CHIF_NET_INLINE chif_net_result
+chif_net_startup()
 {
 #if defined(CHIF_NET_WINSOCK2)
   WSADATA winsock_data;
@@ -537,7 +541,6 @@ chif_net_read(const chif_net_socket socket,
   const int result = recv(socket, buf_out, bufsize, flag);
 #endif
 
-
   if (result == -1) {
     return _chif_net_get_specific_result_type();
   }
@@ -577,24 +580,19 @@ chif_net_readfrom(const chif_net_socket socket,
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
   const int result = recvfrom(socket,
-                                           (char*)buf_out,
-                                           (int)bufsize,
-                                           flag,
-                                           (struct sockaddr*)from_address_out,
-                                           &addrlen);
+                              (char*)buf_out,
+                              (int)bufsize,
+                              flag,
+                              (struct sockaddr*)from_address_out,
+                              &addrlen);
 #else
   const int result = recvfrom(socket,
-                                           buf_out,
-                                           bufsize,
-                                           flag,
-                                           (struct sockaddr*)from_address_out,
-                                           &addrlen);
+                              buf_out,
+                              bufsize,
+                              flag,
+                              (struct sockaddr*)from_address_out,
+                              &addrlen);
 #endif
-
-
-
-
-
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();

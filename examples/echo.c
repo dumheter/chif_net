@@ -34,8 +34,8 @@
       DEBUG_PRINTF("failed with error [%s]\n",                                 \
                    chif_net_result_to_string(res));                            \
       return -1;                                                               \
-    }                                                                   \
-}
+    }                                                                          \
+  }
 
 int
 run_server(int argc, char** argv)
@@ -82,7 +82,7 @@ run_server(int argc, char** argv)
 
   enum
   {
-	  portstrlen = 6
+    portstrlen = 6
   };
   char portstr[portstrlen];
   snprintf(portstr, portstrlen, "%u%c", port, '\0');
@@ -126,7 +126,8 @@ run_server(int argc, char** argv)
   int bytes;
   if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     while (chif_net_read(clisock, buf, bufsize, &bytes) ==
-           CHIF_NET_RESULT_SUCCESS && bytes > 0) {
+             CHIF_NET_RESULT_SUCCESS &&
+           bytes > 0) {
       DEBUG_PRINTF("read [%s], echoing it back.\n", (char*)buf);
       chif_net_write(clisock, buf, (size_t)bytes, &bytes);
     }
