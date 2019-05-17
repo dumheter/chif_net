@@ -49,8 +49,12 @@ typedef struct
 int
 run_echo_test(AlfTestState* state, const echo_args* args)
 {
-  char portstr[6];
-  sprintf(portstr, "%u%c", args->port, '\0');
+  enum
+  {
+    portstrlen = 6
+  };
+  char portstr[portstrlen];
+  snprintf(portstr, portstrlen, "%u%c", args->port, '\0');
 
   chif_net_socket server;
   OK_OR_RET(chif_net_open_socket(&server, args->proto, args->af));
@@ -88,15 +92,15 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(chif_net_accept(server, (chif_net_address*)&unused, &server_client));
   }
 
-  enum { buflen = 17 };
+  enum { buflen = 18 };
   char buf[buflen] = "this is a message";
-  ssize_t bytes;
+  chif_net_ssize_t bytes;
   OK_OR_RET(chif_net_write(client, (uint8_t*)buf, buflen, &bytes));
   OK_OR_RET(buflen == bytes)
 
   enum { inbuflen = 20};
   char inbuf[inbuflen];
-  ssize_t inbytes = 0;
+  chif_net_ssize_t inbytes = 0;
   int can_read = 0;
   chif_net_socket* cli = args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ?
                         &server_client : &server;
@@ -113,7 +117,7 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   OK_OR_RET(inbytes == bytes);
   OK_OR_RET(memcmp(buf, inbuf, inbytes) == 0);
 
-  ssize_t bytes2;
+  chif_net_ssize_t bytes2;
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_write(*cli, (uint8_t*)inbuf, inbytes, &bytes2));
   }
@@ -122,7 +126,7 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   }
   OK_OR_RET(bytes2 == inbytes);
 
-  ssize_t inbytes2;
+  chif_net_ssize_t inbytes2;
   OK_OR_RET(chif_net_can_read(client, &can_read, 50));
   OK_OR_RET(can_read == CHIF_NET_TRUE);
   OK_OR_RET(chif_net_read(client, (uint8_t*)buf, buflen, &inbytes2));

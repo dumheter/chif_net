@@ -127,6 +127,9 @@ extern "C"
   // Types
   // ====================================================================== //
 
+  // temporary signed int
+  typedef int chif_net_ssize_t;
+
   // boolean used for setsockopt calls
   typedef int chif_net_bool;
 #define CHIF_NET_FALSE ((int)0)
@@ -136,7 +139,6 @@ extern "C"
 
 #if defined(CHIF_NET_WINSOCK2)
   typedef SOCKET chif_net_socket;
-  typedef long long ssize_t;
   typedef TIMEVAL timeval;
   typedef unsigned long nfds_t;
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
@@ -328,15 +330,15 @@ typedef int chif_net_socket;
    * But can also mean that a packet of 0 length was received.
    *
    * @param socket
-   * @param buf
+   * @param buf_out
    * @param bufsize
    * @param read_bytes_out May be NULL if you don't want the data.
    * @return
    */
   chif_net_result chif_net_read(const chif_net_socket socket,
-                                uint8_t* buf,
+                                uint8_t* buf_out,
                                 const size_t bufsize,
-                                ssize_t* read_bytes_out);
+                                chif_net_ssize_t* read_bytes_out);
 
   /**
    * Like chif_net_read, but places the source addr of the message in srcaddr.
@@ -344,16 +346,16 @@ typedef int chif_net_socket;
    * @pre Ensure you allocate the appropriate amount of memory for
    * from_address_out. Size of the different address structure may differ.
    * @param socket
-   * @param buf
+   * @param buf_out
    * @param bufsize
    * @param read_bytes_out May be NULL if you don't want the data.
    * @param from_address_out
    * @return
    */
   chif_net_result chif_net_readfrom(const chif_net_socket socket,
-                                    uint8_t* buf,
+                                    uint8_t* buf_out,
                                     const size_t bufsize,
-                                    ssize_t* read_bytes_out,
+                                    chif_net_ssize_t* read_bytes_out,
                                     chif_net_address* from_address_out);
 
   /**
@@ -370,7 +372,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_write(const chif_net_socket socket,
                                  const uint8_t* buf,
                                  const size_t bufsize,
-                                 ssize_t* sent_bytes_out);
+                                 chif_net_ssize_t* sent_bytes_out);
 
   /**
    * Write to a socket, just as chif_net_write, but has a target address option.
@@ -384,7 +386,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_writeto(const chif_net_socket socket,
                                    const uint8_t* buf,
                                    const size_t bufsize,
-                                   ssize_t* sent_bytes_out,
+                                   chif_net_ssize_t* sent_bytes_out,
                                    const chif_net_address* to_address);
 
   /**
@@ -679,8 +681,8 @@ typedef int chif_net_socket;
    * @param provide_own_hdr 0 means no, 1 means yes, the user will build hdr.
    * @return
    */
-  chif_net_result chif_net_set_own_iphdr(chif_net_socket socket,
-                                         int provide_own_hdr);
+  chif_net_result chif_net_set_own_iphdr(const chif_net_socket socket,
+                                         const int provide_own_hdr);
 
   /**
    * Build a ICMP packet. Will not provide an IP header, make sure your OS

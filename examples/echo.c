@@ -50,7 +50,7 @@ run_server(int argc, char** argv)
       switch (argv[i][1]) {
         case 'p': { // PORT
           if (i + 1 < argc) {
-            port = atoi(argv[i + 1]);
+            port = (chif_net_port)atoi(argv[i + 1]);
           }
           break;
         }
@@ -80,8 +80,12 @@ run_server(int argc, char** argv)
   chif_net_socket sock;
   OK_OR_DIE(chif_net_open_socket(&sock, proto, af));
 
-  char portstr[6];
-  sprintf(portstr, "%u%c", port, '\0');
+  enum
+  {
+	  portstrlen = 6
+  };
+  char portstr[portstrlen];
+  snprintf(portstr, portstrlen, "%u%c", port, '\0');
   DEBUG_PRINTF("bind socket on port [%s]\n", portstr);
   chif_net_any_address bindaddr;
 
@@ -96,7 +100,7 @@ run_server(int argc, char** argv)
     chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
   DEBUG_PRINTF("socket bound on [%s:%u]\n", bound_ip, bound_port);
 
-  chif_net_socket clisock;
+  chif_net_socket clisock = CHIF_NET_INVALID_SOCKET;
   chif_net_address cliaddr;
   if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     DEBUG_PRINTF("listen for connection\n");
@@ -119,7 +123,7 @@ run_server(int argc, char** argv)
     bufsize = 1024
   };
   uint8_t buf[bufsize];
-  ssize_t bytes;
+  chif_net_ssize_t bytes;
   if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     while (chif_net_read(clisock, buf, bufsize, &bytes) ==
            CHIF_NET_RESULT_SUCCESS && bytes > 0) {
@@ -161,7 +165,7 @@ run_client(int argc, char** argv)
       switch (argv[i][1]) {
         case 'p': { // PORT
           if (i + 1 < argc) {
-            port = atoi(argv[i + 1]);
+            port = (chif_net_port)atoi(argv[i + 1]);
           }
           break;
         }
@@ -202,8 +206,12 @@ run_client(int argc, char** argv)
 
   DEBUG_PRINTF("create address [%s:%u]\n", ip, port);
   chif_net_address addr;
-  char portstr[6];
-  sprintf(portstr, "%u%c", port, '\0');
+  enum
+  {
+    portstrlen = 6
+  };
+  char portstr[portstrlen];
+  snprintf(portstr, portstrlen, "%u%c", port, '\0');
   OK_OR_DIE(chif_net_create_address(&addr, ip, portstr, af, proto));
 
   DEBUG_PRINTF("connecting..\n");
@@ -216,9 +224,9 @@ run_client(int argc, char** argv)
   {
     strlen = 18
   };
-  ssize_t written = 0;
+  chif_net_ssize_t written = 0;
   while (written < strlen) {
-    ssize_t bytes;
+    chif_net_ssize_t bytes;
     // chif_net_write is not guaranteed to send all bytes in one call.
     OK_OR_DIE(chif_net_write(sock, (uint8_t*)str, strlen, &bytes));
     written += bytes;
@@ -229,7 +237,7 @@ run_client(int argc, char** argv)
     bufsize = 1024
   };
   uint8_t buf[bufsize];
-  ssize_t bytes;
+  chif_net_ssize_t bytes;
   int can_read;
   chif_net_can_read(sock, &can_read, 100);
   OK_OR_DIE(can_read == CHIF_NET_TRUE);

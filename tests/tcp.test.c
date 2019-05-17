@@ -80,7 +80,7 @@ run_echo_server(AlfTestState* state)
     bufsize = 1024
   };
   uint8_t buf[bufsize];
-  ssize_t bytes;
+  chif_net_ssize_t bytes;
   while (chif_net_read(clisock, buf, bufsize, &bytes) ==
          CHIF_NET_RESULT_SUCCESS) {
     printf("read [%s], echoing it back.\n", (char*)buf);

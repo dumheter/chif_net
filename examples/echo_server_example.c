@@ -15,7 +15,8 @@ main(int argc, char** argv)
 
 #if defined(_WIN32) || defined(_WIN64)
   printf("\nenter any key to exit\n> ");
-  int in = getchar();
+  const int in = getchar();
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(in);
 #endif
 
   return 0;

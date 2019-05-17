@@ -9,7 +9,8 @@ ok_or_die(chif_net_result res)
     printf("failed with error %s.\n", chif_net_result_to_string(res));
 #if defined(_WIN32) || defined(_WIN64)
     printf("\nenter any key to exit\n> ");
-    int in = getchar();
+    const int in = getchar();
+    CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(in);
 #endif
     exit(1);
   }
@@ -109,10 +110,12 @@ find_hostname_address(const char* site)
   const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   ok_or_die(chif_net_open_socket(&sock, proto, af));
 
-  printf("looking up %s 's ip\n", site);
-  chif_net_address addr;
-  ok_or_die(chif_net_create_address(&addr, site, "http", af, proto));
-  ok_or_die(chif_net_connect(sock, &addr));
+  {
+    printf("looking up %s 's ip\n", site);
+    chif_net_address addr;
+    ok_or_die(chif_net_create_address(&addr, site, "http", af, proto));
+    ok_or_die(chif_net_connect(sock, &addr));
+  }
 
   {
     printf("ip and port from socket\n");
@@ -152,6 +155,8 @@ find_hostname_address(const char* site)
 int
 main(int argc, char** argv)
 {
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(argc);
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(argv);
   chif_net_startup();
 
   printf("== Find what address the server binds to locally\n");
@@ -169,7 +174,8 @@ main(int argc, char** argv)
 
 #if defined(_WIN32) || defined(_WIN64)
   printf("\nenter any key to exit\n> ");
-  int in = getchar();
+  const int in = getchar();
+  CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(in);
 #endif
 
   return 0;

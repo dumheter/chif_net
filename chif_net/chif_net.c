@@ -249,8 +249,6 @@ _chif_net_ai_error_to_result(const int result)
     default:
       return CHIF_NET_RESULT_UNKNOWN;
   }
-
-  return CHIF_NET_RESULT_UNKNOWN;
 }
 
 /**
@@ -293,31 +291,34 @@ _chif_net_setsockopt(chif_net_socket socket,
  * [ ] Implement a Windows version.
  *
  * @param socket Socket to check.
- * @param res Output parameter, 0 for fail, or 1 for success.
+ * @param res_out Output parameter, 0 for fail, or 1 for success.
  * @param events Check man page for poll for the possible events.
  * @param timeout_ms If event being polled has not happened, how long before
  *                   we should timeout and return? Use 0 to return instantly.
  * @return The result of the syscall translated into chif_net_result types.
  */
 static CHIF_NET_INLINE chif_net_result
-_chif_net_poll(chif_net_socket socket, int* res, short events, int timeout_ms)
+_chif_net_poll(const chif_net_socket socket, int* res_out, const short events, const int timeout_ms)
 {
-  struct pollfd pfd = { socket, events, 0 };
+  struct pollfd pfd;
+  pfd.fd = socket;
+  pfd.events = events;
+  pfd.revents = 0;
   const nfds_t fds_count= 1;
 
 #if defined(CHIF_NET_WINSOCK2)
-  int pres = WSAPoll(&pfd, nfds, timeout_ms);
+  int pres = WSAPoll(&pfd, fds_count, timeout_ms);
 #else // if defined(CHIF_NET_BERKLEY_SOCKET)
   int pres = poll(&pfd, fds_count, timeout_ms);
 #endif
 
   if (pres == 0) {
-    *res = 0;
+    *res_out = 0;
   } else if (pres > 0) {
     if (pfd.revents & events) {
-      *res = 1;
+      *res_out = 1;
     } else {
-      *res = 0;
+      *res_out = 0;
       if (pfd.revents & POLLERR) {
         return CHIF_NET_RESULT_FAIL;
       } else if (pfd.revents & POLLHUP) {
@@ -327,7 +328,7 @@ _chif_net_poll(chif_net_socket socket, int* res, short events, int timeout_ms)
       }
     }
   } else {
-    *res = 0;
+    *res_out = 0;
     return _chif_net_get_specific_result_type();
   }
 
@@ -390,6 +391,7 @@ chif_net_open_socket(chif_net_socket* socket_out,
       type = SOCK_STREAM;
       break;
     }
+    default:
     case CHIF_NET_TRANSPORT_PROTOCOL_UDP: {
       type = SOCK_DGRAM;
       break;
@@ -411,7 +413,7 @@ chif_net_close_socket(chif_net_socket* socket_out)
   if (*socket_out != CHIF_NET_INVALID_SOCKET) {
     // Close the socket
 #if defined(CHIF_NET_WINSOCK2)
-    const int result = closesocket(*socket);
+    const int result = closesocket(*socket_out);
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
     const int result = close(*socket_out);
 #else
@@ -511,10 +513,10 @@ chif_net_accept(const chif_net_socket listening_socket,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_read(chif_net_socket socket,
-              uint8_t* buf,
-              size_t bufsize,
-              ssize_t* read_bytes_out)
+chif_net_read(const chif_net_socket socket,
+              uint8_t* buf_out,
+              const size_t bufsize,
+              chif_net_ssize_t* read_bytes_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
     return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -526,7 +528,15 @@ chif_net_read(chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = recv(socket, buf, bufsize, flag);
+#if defined(CHIF_NET_WINSOCK2)
+  if (bufsize > INT_MAX) {
+    return CHIF_NET_RESULT_BUFSIZE_INVALID;
+  }
+  const chif_net_ssize_t result = recv(socket, (char*)buf_out, (int)bufsize, flag);
+#else
+  const chif_net_ssize_t result = recv(socket, buf_out, bufsize, flag);
+#endif
+
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -544,9 +554,9 @@ chif_net_read(chif_net_socket socket,
 
 CHIF_NET_INLINE chif_net_result
 chif_net_readfrom(const chif_net_socket socket,
-                  uint8_t* buf,
+                  uint8_t* buf_out,
                   const size_t bufsize,
-                  ssize_t* read_bytes_out,
+                  chif_net_ssize_t* read_bytes_out,
                   chif_net_address* from_address_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
@@ -559,17 +569,32 @@ chif_net_readfrom(const chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  // buflen param is signed in winsock2
+  socklen_t addrlen = _chif_net_size_from_address(from_address_out);
+  const socklen_t addrlen_copy = addrlen;
+
 #if defined(CHIF_NET_WINSOCK2)
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
+  const chif_net_ssize_t result = recvfrom(socket,
+                                           (char*)buf_out,
+                                           (int)bufsize,
+                                           flag,
+                                           (struct sockaddr*)from_address_out,
+                                           &addrlen);
+#else
+  const chif_net_ssize_t result = recvfrom(socket,
+                                           buf_out,
+                                           bufsize,
+                                           flag,
+                                           (struct sockaddr*)from_address_out,
+                                           &addrlen);
 #endif
 
-  socklen_t addrlen = _chif_net_size_from_address(from_address_out);
-  const socklen_t addrlen_copy = addrlen;
-  const ssize_t result = recvfrom(
-    socket, buf, bufsize, flag, (struct sockaddr*)from_address_out, &addrlen);
+
+
+
+
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -594,7 +619,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_write(const chif_net_socket socket,
                const uint8_t* buf,
                const size_t bufsize,
-               ssize_t* sent_bytes_out)
+               chif_net_ssize_t* sent_bytes_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
     return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -606,7 +631,14 @@ chif_net_write(const chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const ssize_t result = send(socket, buf, bufsize, flag);
+#if defined(CHIF_NET_WINSOCK2)
+  if (bufsize > INT_MAX) {
+    return CHIF_NET_RESULT_BUFSIZE_INVALID;
+  }
+  const chif_net_ssize_t result = send(socket, (const char*)buf, (int)bufsize, flag);
+#else
+  const chif_net_ssize_t result = send(socket, buf, bufsize, flag);
+#endif
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -623,7 +655,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_writeto(const chif_net_socket socket,
                  const uint8_t* buf,
                  const size_t bufsize,
-                 ssize_t* sent_bytes_out,
+                 chif_net_ssize_t* sent_bytes_out,
                  const chif_net_address* to_address)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
@@ -637,7 +669,16 @@ chif_net_writeto(const chif_net_socket socket,
 #endif
 
   const socklen_t addrlen = _chif_net_size_from_address(to_address);
-  ssize_t result = sendto(socket, buf, bufsize, flag, to_address, addrlen);
+
+#if defined(CHIF_NET_WINSOCK2)
+  if (bufsize > INT_MAX) {
+    return CHIF_NET_RESULT_BUFSIZE_INVALID;
+  }
+  chif_net_ssize_t result =
+    sendto(socket, (const char*)buf, (int)bufsize, flag, to_address, addrlen);
+#else
+  chif_net_ssize_t result = sendto(socket, buf, bufsize, flag, to_address, addrlen);
+#endif
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -682,7 +723,7 @@ chif_net_set_blocking(const chif_net_socket socket,
 #if defined(CHIF_NET_WINSOCK2)
   u_long blocking_mode = !blocking;
   int result = ioctlsocket(socket, (long)FIONBIO, &blocking_mode);
-  if (result == CHIF_NET_SOCKET_ERROR) {
+  if (result != 0) {
     return _chif_net_get_specific_result_type();
   }
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
@@ -854,7 +895,7 @@ chif_net_port_from_address(const chif_net_address* address,
 }
 
 CHIF_NET_INLINE chif_net_result
-chif_net_get_bytes_available(chif_net_socket socket,
+chif_net_get_bytes_available(const chif_net_socket socket,
                              unsigned long* bytes_available_out)
 {
 #if defined(CHIF_NET_WINSOCK2)
