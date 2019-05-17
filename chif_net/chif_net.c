@@ -516,7 +516,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_read(const chif_net_socket socket,
               uint8_t* buf_out,
               const size_t bufsize,
-              chif_net_ssize_t* read_bytes_out)
+              int* read_bytes_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
     return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -532,9 +532,9 @@ chif_net_read(const chif_net_socket socket,
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  const chif_net_ssize_t result = recv(socket, (char*)buf_out, (int)bufsize, flag);
+  const int result = recv(socket, (char*)buf_out, (int)bufsize, flag);
 #else
-  const chif_net_ssize_t result = recv(socket, buf_out, bufsize, flag);
+  const int result = recv(socket, buf_out, bufsize, flag);
 #endif
 
 
@@ -556,7 +556,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_readfrom(const chif_net_socket socket,
                   uint8_t* buf_out,
                   const size_t bufsize,
-                  chif_net_ssize_t* read_bytes_out,
+                  int* read_bytes_out,
                   chif_net_address* from_address_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
@@ -576,14 +576,14 @@ chif_net_readfrom(const chif_net_socket socket,
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  const chif_net_ssize_t result = recvfrom(socket,
+  const int result = recvfrom(socket,
                                            (char*)buf_out,
                                            (int)bufsize,
                                            flag,
                                            (struct sockaddr*)from_address_out,
                                            &addrlen);
 #else
-  const chif_net_ssize_t result = recvfrom(socket,
+  const int result = recvfrom(socket,
                                            buf_out,
                                            bufsize,
                                            flag,
@@ -619,7 +619,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_write(const chif_net_socket socket,
                const uint8_t* buf,
                const size_t bufsize,
-               chif_net_ssize_t* sent_bytes_out)
+               int* sent_bytes_out)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
     return CHIF_NET_RESULT_NOT_A_SOCKET;
@@ -635,9 +635,9 @@ chif_net_write(const chif_net_socket socket,
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  const chif_net_ssize_t result = send(socket, (const char*)buf, (int)bufsize, flag);
+  const int result = send(socket, (const char*)buf, (int)bufsize, flag);
 #else
-  const chif_net_ssize_t result = send(socket, buf, bufsize, flag);
+  const int result = send(socket, buf, bufsize, flag);
 #endif
 
   if (result == -1) {
@@ -655,7 +655,7 @@ CHIF_NET_INLINE chif_net_result
 chif_net_writeto(const chif_net_socket socket,
                  const uint8_t* buf,
                  const size_t bufsize,
-                 chif_net_ssize_t* sent_bytes_out,
+                 int* sent_bytes_out,
                  const chif_net_address* to_address)
 {
   if (socket == CHIF_NET_INVALID_SOCKET) {
@@ -674,10 +674,10 @@ chif_net_writeto(const chif_net_socket socket,
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  chif_net_ssize_t result =
+  int result =
     sendto(socket, (const char*)buf, (int)bufsize, flag, to_address, addrlen);
 #else
-  chif_net_ssize_t result = sendto(socket, buf, bufsize, flag, to_address, addrlen);
+  int result = sendto(socket, buf, bufsize, flag, to_address, addrlen);
 #endif
 
   if (result == -1) {

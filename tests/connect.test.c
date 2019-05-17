@@ -51,10 +51,10 @@ duckduckgo(AlfTestState* state)
   Accept-Encoding: gzip, deflate                                        \
   ";
   const size_t request_len = strlen(request);
-  chif_net_ssize_t written = 0;
+  int written = 0;
   int iters = 0;
-  while (written < (chif_net_ssize_t)request_len) {
-    chif_net_ssize_t bytes;
+  while (written < (int)request_len) {
+    int bytes;
     ALF_CHECK_TRUE(
       state,
       CHIF_NET_RESULT_SUCCESS ==
@@ -71,7 +71,7 @@ duckduckgo(AlfTestState* state)
     buflen = 50 * (long)1e6
   }; // 50 MB
   uint8_t* buf = malloc(buflen);
-  chif_net_ssize_t readbytes;
+  int readbytes;
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS ==
                    chif_net_read(sock, buf, buflen, &readbytes));

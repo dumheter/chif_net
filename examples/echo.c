@@ -123,7 +123,7 @@ run_server(int argc, char** argv)
     bufsize = 1024
   };
   uint8_t buf[bufsize];
-  chif_net_ssize_t bytes;
+  int bytes;
   if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     while (chif_net_read(clisock, buf, bufsize, &bytes) ==
            CHIF_NET_RESULT_SUCCESS && bytes > 0) {
@@ -224,9 +224,9 @@ run_client(int argc, char** argv)
   {
     strlen = 18
   };
-  chif_net_ssize_t written = 0;
+  int written = 0;
   while (written < strlen) {
-    chif_net_ssize_t bytes;
+    int bytes;
     // chif_net_write is not guaranteed to send all bytes in one call.
     OK_OR_DIE(chif_net_write(sock, (uint8_t*)str, strlen, &bytes));
     written += bytes;
@@ -237,7 +237,7 @@ run_client(int argc, char** argv)
     bufsize = 1024
   };
   uint8_t buf[bufsize];
-  chif_net_ssize_t bytes;
+  int bytes;
   int can_read;
   chif_net_can_read(sock, &can_read, 100);
   OK_OR_DIE(can_read == CHIF_NET_TRUE);

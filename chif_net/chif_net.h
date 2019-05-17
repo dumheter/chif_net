@@ -127,9 +127,6 @@ extern "C"
   // Types
   // ====================================================================== //
 
-  // temporary signed int
-  typedef int chif_net_ssize_t;
-
   // boolean used for setsockopt calls
   typedef int chif_net_bool;
 #define CHIF_NET_FALSE ((int)0)
@@ -338,7 +335,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_read(const chif_net_socket socket,
                                 uint8_t* buf_out,
                                 const size_t bufsize,
-                                chif_net_ssize_t* read_bytes_out);
+                                int* read_bytes_out);
 
   /**
    * Like chif_net_read, but places the source addr of the message in srcaddr.
@@ -355,7 +352,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_readfrom(const chif_net_socket socket,
                                     uint8_t* buf_out,
                                     const size_t bufsize,
-                                    chif_net_ssize_t* read_bytes_out,
+                                    int* read_bytes_out,
                                     chif_net_address* from_address_out);
 
   /**
@@ -372,7 +369,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_write(const chif_net_socket socket,
                                  const uint8_t* buf,
                                  const size_t bufsize,
-                                 chif_net_ssize_t* sent_bytes_out);
+                                 int* sent_bytes_out);
 
   /**
    * Write to a socket, just as chif_net_write, but has a target address option.
@@ -386,7 +383,7 @@ typedef int chif_net_socket;
   chif_net_result chif_net_writeto(const chif_net_socket socket,
                                    const uint8_t* buf,
                                    const size_t bufsize,
-                                   chif_net_ssize_t* sent_bytes_out,
+                                   int* sent_bytes_out,
                                    const chif_net_address* to_address);
 
   /**
