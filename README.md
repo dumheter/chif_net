@@ -14,3 +14,5 @@ call).
 write, has error).
 [ ] Enable the UNIX transport protocol.
 [ ] Upgrade testing library to latest version of alf_test.
+[ ] More extensive tests.
+[ ] Test on Windows.
