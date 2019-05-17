@@ -58,7 +58,7 @@ run_echo_test(AlfTestState* state, const echo_args* args)
 
   chif_net_socket server;
   OK_OR_RET(chif_net_open_socket(&server, args->proto, args->af));
-  OK_OR_RET(chif_net_set_reuse_port(server, CHIF_NET_TRUE));
+  OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
 
   chif_net_any_address server_addr;
   OK_OR_RET(chif_net_create_address((chif_net_address*)&server_addr, CHIF_NET_ANY_ADDRESS, portstr, args->af, args->proto));
