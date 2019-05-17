@@ -3,14 +3,12 @@ project(chif_net C)
 set(CMAKE_C_STANDARD 99)
 
 if (MSVC)
-  set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} /W4")
+  set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS}")
 else ()
   set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
 endif ()
 
 include_directories(SYSTEM chif_net)
-
-set(CHIF_NET_BUILD_EXTRA true)
 
 if (CHIF_NET_BUILD_EXTRA)
   include_directories(SYSTEM tests/thirdparty)

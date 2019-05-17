@@ -53,7 +53,7 @@ duckduckgo(AlfTestState* state)
   const size_t request_len = strlen(request);
   chif_net_ssize_t written = 0;
   int iters = 0;
-  while (written < request_len) {
+  while (written < (chif_net_ssize_t)request_len) {
     chif_net_ssize_t bytes;
     ALF_CHECK_TRUE(
       state,
