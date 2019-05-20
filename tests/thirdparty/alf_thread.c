@@ -104,7 +104,7 @@ typedef struct tag_AlfMutex
   /** Whether mutex supports recursive locking **/
   AlfBool recursive;
 #if defined(ALF_THREAD_TARGET_WINDOWS)
-  union
+  union AlfTagAlfMutexUnion
   {
     /** Windows slim reader-writer lock handle for non-recursive mutexes **/
     SRWLOCK srwlock;

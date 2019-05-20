@@ -111,7 +111,7 @@ typedef int chif_net_bool;
 typedef uint16_t chif_net_port;
 
 #if defined(CHIF_NET_WINSOCK2)
-typedef unsigned int chif_net_socket;
+typedef uint64_t chif_net_socket;
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
 typedef int chif_net_socket;
 #endif
@@ -168,7 +168,11 @@ typedef enum
 typedef enum
 {
   CHIF_NET_ADDRESS_FAMILY_IPV4 = 2 /*AF_INET*/,
+#if defined(CHIF_NET_WINSOCK2)
+  CHIF_NET_ADDRESS_FAMILY_IPV6 = 23 /*AF_INET6*/
+#else
   CHIF_NET_ADDRESS_FAMILY_IPV6 = 10 /*AF_INET6*/
+#endif
 } chif_net_address_family;
 
 typedef struct

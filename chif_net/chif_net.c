@@ -502,7 +502,7 @@ chif_net_connect(const chif_net_socket socket, const chif_net_address* address)
   if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
     struct sockaddr_in addr;
     memcpy(&addr, address, sizeof(chif_net_ipv4_address));
-    memset(&addr + sizeof(chif_net_ipv4_address),
+    memset(((uint8_t*)&addr) + sizeof(chif_net_ipv4_address),
            0,
            sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
     result = connect(socket, (const struct sockaddr*)&addr, sizeof(addr));
@@ -527,7 +527,7 @@ chif_net_bind(const chif_net_socket socket, const chif_net_address* address)
   if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
     struct sockaddr_in addr;
     memcpy(&addr, address, sizeof(chif_net_ipv4_address));
-    memset(&addr + sizeof(chif_net_ipv4_address),
+    memset(((uint8_t*)&addr) + sizeof(chif_net_ipv4_address),
            0,
            sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
     result = bind(socket, (const struct sockaddr*)&addr, sizeof(addr));
@@ -783,7 +783,7 @@ chif_net_writeto(const chif_net_socket socket,
   if (to_address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
     struct sockaddr_in addr;
     memcpy(&addr, to_address, sizeof(chif_net_ipv4_address));
-    memset(&addr + sizeof(chif_net_ipv4_address),
+    memset(((uint8_t*)&addr) + sizeof(chif_net_ipv4_address),
            0,
            sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
 #if defined(CHIF_NET_WINSOCK2)
@@ -807,7 +807,7 @@ chif_net_writeto(const chif_net_socket socket,
                     (const char*)buf,
                     (int)bufsize,
                     flag,
-                    (const struct sockaddr*)&to_address,
+                    (const struct sockaddr*)to_address,
                     sizeof(struct sockaddr_in6));
 #else
     result = sendto(socket,
