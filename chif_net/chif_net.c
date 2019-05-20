@@ -28,6 +28,36 @@
 
 #include "chif_net.h"
 
+#if defined(_WIN32) || defined(_WIN64)
+#if !defined(WIN32_LEAN_AND_MEAN)
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <WS2tcpip.h>
+#include <WinSock2.h>
+#include <winerror.h>
+#include <ws2def.h>
+#pragma comment(lib, "Ws2_32.lib")
+#elif defined(__linux__) || defined(__APPLE__) || defined(__GNUC__)
+#include <arpa/inet.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <poll.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+#if defined(__linux__)
+#include <linux/icmp.h>
+#endif
+
+#include <assert.h>
+#include <stdint.h>
+
 #include <stdio.h>
 #include <string.h>
 #if defined(CHIF_NET_BERKLEY_SOCKET)
@@ -35,10 +65,41 @@
 #endif
 
 // ============================================================ //
+// Types
+// ============================================================ //
+
+#if defined(CHIF_NET_WINSOCK2)
+typedef TIMEVAL timeval;
+typedef unsigned long nfds_t;
+#endif
+
+// ============================================================ //
+// Static Asserts
+// ============================================================ //
+
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_TRANSPORT_PROTOCOL_TCP ==
+                         (int64_t)IPPROTO_TCP,
+                       chif_net_ipproto_tcp_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_TRANSPORT_PROTOCOL_UDP ==
+                         (int64_t)IPPROTO_UDP,
+                       chif_net_ipproto_udp_correct_value);
+
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_ADDRESS_FAMILY_IPV4 ==
+                         (int64_t)AF_INET,
+                       chif_net_af_ipv4_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_ADDRESS_FAMILY_IPV6 ==
+                         (int64_t)AF_INET6,
+                       chif_net_af_ipv6_correct_value);
+
+CHIF_NET_STATIC_ASSERT(sizeof(chif_net_ipv6_address) ==
+                         sizeof(struct sockaddr_in6),
+                       chif_net_ipv6_address_struct_correct_size);
+
+// ============================================================ //
 // Static functions
 // ============================================================ //
 
-static CHIF_NET_INLINE chif_net_result
+static chif_net_result
 _chif_net_get_specific_result_type()
 {
 #if defined(CHIF_NET_WINSOCK2)
@@ -219,7 +280,7 @@ _chif_net_get_specific_result_type()
 #endif
 }
 
-static CHIF_NET_INLINE chif_net_result
+static chif_net_result
 _chif_net_ai_error_to_result(const int result)
 {
   switch (result) {
@@ -260,7 +321,7 @@ _chif_net_ai_error_to_result(const int result)
  * @param optlen
  * @return
  */
-static CHIF_NET_INLINE chif_net_result
+static chif_net_result
 _chif_net_setsockopt(chif_net_socket socket,
                      int level,
                      int optname,
@@ -285,11 +346,6 @@ _chif_net_setsockopt(chif_net_socket socket,
 /**
  * Use the syscall poll to check if the given events has happened.
  *
- * @TODO poll
- * [ ] User can poll several devices.
- * [x] User can set a timeout.
- * [ ] Implement a Windows version.
- *
  * @param socket Socket to check.
  * @param res_out Output parameter, 0 for fail, or 1 for success.
  * @param events Check man page for poll for the possible events.
@@ -297,7 +353,7 @@ _chif_net_setsockopt(chif_net_socket socket,
  *                   we should timeout and return? Use 0 to return instantly.
  * @return The result of the syscall translated into chif_net_result types.
  */
-static CHIF_NET_INLINE chif_net_result
+static chif_net_result
 _chif_net_poll(const chif_net_socket socket,
                int* res_out,
                const short events,
@@ -338,14 +394,17 @@ _chif_net_poll(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-static CHIF_NET_INLINE socklen_t
-_chif_net_size_from_address(const chif_net_address* address)
+static socklen_t
+_chif_net_address_size_from_address_family(
+  const chif_net_address_family address_family)
 {
   socklen_t addrlen;
-  if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    addrlen = sizeof(chif_net_ipv4_address);
-  } else /* if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
-    addrlen = sizeof(chif_net_ipv6_address);
+  if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    addrlen = sizeof(struct sockaddr_in);
+  } else if (address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    addrlen = sizeof(struct sockaddr_in6);
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
   return addrlen;
 }
@@ -354,7 +413,7 @@ _chif_net_size_from_address(const chif_net_address* address)
 // Implementation
 // ====================================================================== //
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_startup()
 {
 #if defined(CHIF_NET_WINSOCK2)
@@ -367,7 +426,7 @@ chif_net_startup()
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_shutdown()
 {
 #if defined(CHIF_NET_WINSOCK2)
@@ -381,7 +440,7 @@ chif_net_shutdown()
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_open_socket(chif_net_socket* socket_out,
                      const chif_net_transport_protocol transport_protocol,
                      const chif_net_address_family address_family)
@@ -395,11 +454,12 @@ chif_net_open_socket(chif_net_socket* socket_out,
       type = SOCK_STREAM;
       break;
     }
-    default:
     case CHIF_NET_TRANSPORT_PROTOCOL_UDP: {
       type = SOCK_DGRAM;
       break;
     }
+    default:
+      return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
 
   *socket_out = socket(domain, type, protocol);
@@ -411,7 +471,7 @@ chif_net_open_socket(chif_net_socket* socket_out,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_close_socket(chif_net_socket* socket_out)
 {
   if (*socket_out != CHIF_NET_INVALID_SOCKET) {
@@ -435,16 +495,22 @@ chif_net_close_socket(chif_net_socket* socket_out)
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_connect(const chif_net_socket socket, const chif_net_address* address)
 {
   int result;
-  if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    result = connect(
-      socket, (const struct sockaddr*)address, sizeof(chif_net_ipv4_address));
-  } else /* if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
+  if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    memcpy(&addr, address, sizeof(chif_net_ipv4_address));
+    memset(&addr + sizeof(chif_net_ipv4_address),
+           0,
+           sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
+    result = connect(socket, (const struct sockaddr*)&addr, sizeof(addr));
+  } else if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
     result = connect(
       socket, (const struct sockaddr*)address, sizeof(chif_net_ipv6_address));
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
 
   if (result == -1) {
@@ -454,16 +520,22 @@ chif_net_connect(const chif_net_socket socket, const chif_net_address* address)
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_bind(const chif_net_socket socket, const chif_net_address* address)
 {
   int result;
-  if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    result = bind(
-      socket, (const struct sockaddr*)address, sizeof(chif_net_ipv4_address));
-  } else /* if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
+  if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    memcpy(&addr, address, sizeof(chif_net_ipv4_address));
+    memset(&addr + sizeof(chif_net_ipv4_address),
+           0,
+           sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
+    result = bind(socket, (const struct sockaddr*)&addr, sizeof(addr));
+  } else if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
     result = bind(
       socket, (const struct sockaddr*)address, sizeof(chif_net_ipv6_address));
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
 
   if (result != 0) {
@@ -473,7 +545,7 @@ chif_net_bind(const chif_net_socket socket, const chif_net_address* address)
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_listen(const chif_net_socket socket, const int maximum_backlog)
 {
   const int result = listen(socket, maximum_backlog);
@@ -485,15 +557,27 @@ chif_net_listen(const chif_net_socket socket, const int maximum_backlog)
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_accept(const chif_net_socket listening_socket,
                 chif_net_address* client_address_out,
                 chif_net_socket* client_socket_out)
 {
-  socklen_t client_addrlen = _chif_net_size_from_address(client_address_out);
+  socklen_t client_addrlen = _chif_net_address_size_from_address_family(
+    client_address_out->address_family);
   const socklen_t addrlen_copy = client_addrlen;
-  *client_socket_out = accept(
-    listening_socket, (struct sockaddr*)client_address_out, &client_addrlen);
+
+  if (client_address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    *client_socket_out =
+      accept(listening_socket, (struct sockaddr*)&addr, &client_addrlen);
+    memcpy(client_address_out, &addr, sizeof(chif_net_ipv4_address));
+  } else if (client_address_out->address_family ==
+             CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    *client_socket_out = accept(
+      listening_socket, (struct sockaddr*)client_address_out, &client_addrlen);
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
+  }
 
   if (client_addrlen > addrlen_copy) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
@@ -516,7 +600,7 @@ chif_net_accept(const chif_net_socket listening_socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_read(const chif_net_socket socket,
               uint8_t* buf_out,
               const size_t bufsize,
@@ -555,7 +639,7 @@ chif_net_read(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_readfrom(const chif_net_socket socket,
                   uint8_t* buf_out,
                   const size_t bufsize,
@@ -572,27 +656,50 @@ chif_net_readfrom(const chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  socklen_t addrlen = _chif_net_size_from_address(from_address_out);
+  socklen_t addrlen = _chif_net_address_size_from_address_family(
+    from_address_out->address_family);
   const socklen_t addrlen_copy = addrlen;
 
 #if defined(CHIF_NET_WINSOCK2)
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  const int result = recvfrom(socket,
-                              (char*)buf_out,
-                              (int)bufsize,
-                              flag,
-                              (struct sockaddr*)from_address_out,
-                              &addrlen);
-#else
-  const int result = recvfrom(socket,
-                              buf_out,
-                              bufsize,
-                              flag,
-                              (struct sockaddr*)from_address_out,
-                              &addrlen);
 #endif
+
+  int result;
+  if (from_address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+#if defined(CHIF_NET_WINSOCK2)
+    result = recvfrom(socket,
+                      (char*)buf_out,
+                      (int)bufsize,
+                      flag,
+                      (struct sockaddr*)&addr,
+                      &addrlen);
+#else
+    result = recvfrom(
+      socket, buf_out, bufsize, flag, (struct sockaddr*)&addr, &addrlen);
+#endif
+    memcpy(from_address_out, &addr, sizeof(chif_net_ipv4_address));
+  } else if (from_address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+#if defined(CHIF_NET_WINSOCK2)
+    result = recvfrom(socket,
+                      (char*)buf_out,
+                      (int)bufsize,
+                      flag,
+                      (struct sockaddr*)from_address_out,
+                      &addrlen);
+#else
+    result = recvfrom(socket,
+                      buf_out,
+                      bufsize,
+                      flag,
+                      (struct sockaddr*)from_address_out,
+                      &addrlen);
+#endif
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
+  }
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -613,7 +720,7 @@ chif_net_readfrom(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_write(const chif_net_socket socket,
                const uint8_t* buf,
                const size_t bufsize,
@@ -649,7 +756,7 @@ chif_net_write(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_writeto(const chif_net_socket socket,
                  const uint8_t* buf,
                  const size_t bufsize,
@@ -666,17 +773,53 @@ chif_net_writeto(const chif_net_socket socket,
   flag = MSG_NOSIGNAL;
 #endif
 
-  const socklen_t addrlen = _chif_net_size_from_address(to_address);
-
 #if defined(CHIF_NET_WINSOCK2)
   if (bufsize > INT_MAX) {
     return CHIF_NET_RESULT_BUFSIZE_INVALID;
   }
-  int result =
-    sendto(socket, (const char*)buf, (int)bufsize, flag, to_address, addrlen);
-#else
-  int result = sendto(socket, buf, bufsize, flag, to_address, addrlen);
 #endif
+
+  int result;
+  if (to_address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    memcpy(&addr, to_address, sizeof(chif_net_ipv4_address));
+    memset(&addr + sizeof(chif_net_ipv4_address),
+           0,
+           sizeof(struct sockaddr_in) - sizeof(chif_net_ipv4_address));
+#if defined(CHIF_NET_WINSOCK2)
+    result = sendto(socket,
+                    (const char*)buf,
+                    (int)bufsize,
+                    flag,
+                    (const struct sockaddr*)&addr,
+                    sizeof(struct sockaddr_in));
+#else
+    result = sendto(socket,
+                    buf,
+                    bufsize,
+                    flag,
+                    (const struct sockaddr*)&addr,
+                    sizeof(struct sockaddr_in));
+#endif
+  } else if (to_address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+#if defined(CHIF_NET_WINSOCK2)
+    result = sendto(socket,
+                    (const char*)buf,
+                    (int)bufsize,
+                    flag,
+                    (const struct sockaddr*)&to_address,
+                    sizeof(struct sockaddr_in6));
+#else
+    result = sendto(socket,
+                    buf,
+                    bufsize,
+                    flag,
+                    (const struct sockaddr*)to_address,
+                    sizeof(struct sockaddr_in6));
+#endif
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
+  }
 
   if (result == -1) {
     return _chif_net_get_specific_result_type();
@@ -689,7 +832,7 @@ chif_net_writeto(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_can_read(const chif_net_socket socket,
                   int* can_read_out,
                   const int timeout_ms)
@@ -697,7 +840,7 @@ chif_net_can_read(const chif_net_socket socket,
   return _chif_net_poll(socket, can_read_out, POLLIN, timeout_ms);
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_can_write(const chif_net_socket socket,
                    int* can_write_out,
                    const int timeout_ms)
@@ -705,7 +848,7 @@ chif_net_can_write(const chif_net_socket socket,
   return _chif_net_poll(socket, can_write_out, POLLOUT, timeout_ms);
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_has_error(const chif_net_socket socket, const int timeout_ms)
 {
   int socket_no_error;
@@ -714,7 +857,7 @@ chif_net_has_error(const chif_net_socket socket, const int timeout_ms)
   return res;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_blocking(const chif_net_socket socket,
                       const chif_net_bool blocking)
 {
@@ -736,7 +879,7 @@ chif_net_set_blocking(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_create_address(chif_net_address* address_out,
                         const char* name,
                         const char* service,
@@ -764,12 +907,13 @@ chif_net_create_address(chif_net_address* address_out,
 
   const int result = getaddrinfo(name, service, &hints, &ai);
   if (result != 0) {
+    // no need to freeaddrinfo() here
     return _chif_net_ai_error_to_result(result);
   }
 
   switch (ai->ai_family) {
     case CHIF_NET_ADDRESS_FAMILY_IPV4: {
-      memcpy(address_out, ai->ai_addr, sizeof(struct sockaddr_in));
+      memcpy(address_out, ai->ai_addr, sizeof(chif_net_ipv4_address));
       break;
     }
     case CHIF_NET_ADDRESS_FAMILY_IPV6: {
@@ -778,7 +922,7 @@ chif_net_create_address(chif_net_address* address_out,
     }
     default:
       freeaddrinfo(ai);
-      return CHIF_NET_RESULT_FAIL;
+      return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
 
   freeaddrinfo(ai);
@@ -786,13 +930,24 @@ chif_net_create_address(chif_net_address* address_out,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_address_from_socket(const chif_net_socket socket,
-                             chif_net_address* address)
+                             chif_net_address* address_out)
 {
-  socklen_t addrlen = _chif_net_size_from_address(address);
+  socklen_t addrlen =
+    _chif_net_address_size_from_address_family(address_out->address_family);
   const socklen_t addrlen_copy = addrlen;
-  const int result = getsockname(socket, address, &addrlen);
+
+  int result;
+  if (address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    result = getsockname(socket, (struct sockaddr*)&addr, &addrlen);
+    memcpy(address_out, &addr, sizeof(chif_net_ipv4_address));
+  } else if (address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    result = getsockname(socket, (struct sockaddr*)address_out, &addrlen);
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
+  }
 
   if (result != 0) {
     return _chif_net_get_specific_result_type();
@@ -805,13 +960,24 @@ chif_net_address_from_socket(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_peer_address_from_socket(const chif_net_socket socket,
                                   chif_net_address* peer_address_out)
 {
-  socklen_t addrlen = _chif_net_size_from_address(peer_address_out);
+  socklen_t addrlen = _chif_net_address_size_from_address_family(
+    peer_address_out->address_family);
   const socklen_t addrlen_copy = addrlen;
-  const int result = getpeername(socket, peer_address_out, &addrlen);
+
+  int result;
+  if (peer_address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    struct sockaddr_in addr;
+    result = getpeername(socket, (struct sockaddr*)&addr, &addrlen);
+    memcpy(peer_address_out, &addr, sizeof(chif_net_ipv4_address));
+  } else if (peer_address_out->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    result = getpeername(socket, (struct sockaddr*)peer_address_out, &addrlen);
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
+  }
 
   if (result != 0) {
     return _chif_net_get_specific_result_type();
@@ -824,7 +990,7 @@ chif_net_peer_address_from_socket(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_ip_from_socket(const chif_net_socket socket,
                         char* str_out,
                         const size_t strlen)
@@ -839,20 +1005,20 @@ chif_net_ip_from_socket(const chif_net_socket socket,
   return chif_net_ip_from_address((chif_net_address*)&address, str_out, strlen);
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_ip_from_address(const chif_net_address* address,
                          char* str_out,
                          const size_t strlen)
 {
   const char* ntop_result;
-  if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    ntop_result = inet_ntop(address->sa_family,
-                            &((const chif_net_ipv4_address*)address)->sin_addr,
+  if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    ntop_result = inet_ntop(address->address_family,
+                            &((const chif_net_ipv4_address*)address)->address,
                             str_out,
                             strlen);
-  } else /* if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
-    ntop_result = inet_ntop(address->sa_family,
-                            &((const chif_net_ipv6_address*)address)->sin6_addr,
+  } else /* if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
+    ntop_result = inet_ntop(address->address_family,
+                            &((const chif_net_ipv6_address*)address)->address,
                             str_out,
                             strlen);
   }
@@ -864,7 +1030,7 @@ chif_net_ip_from_address(const chif_net_address* address,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_port_from_socket(const chif_net_socket socket, chif_net_port* port_out)
 {
   chif_net_any_address address;
@@ -878,21 +1044,23 @@ chif_net_port_from_socket(const chif_net_socket socket, chif_net_port* port_out)
   return chif_net_port_from_address((chif_net_address*)&address, port_out);
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_port_from_address(const chif_net_address* address,
                            chif_net_port* port_out)
 {
 
-  if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-    *port_out = ntohs(((const chif_net_ipv4_address*)address)->sin_port);
-  } else /* if (address->sa_family == CHIF_NET_ADDRESS_FAMILY_IPV6) */ {
-    *port_out = ntohs(((const chif_net_ipv6_address*)address)->sin6_port);
+  if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+    *port_out = ntohs(((const chif_net_ipv4_address*)address)->port);
+  } else if (address->address_family == CHIF_NET_ADDRESS_FAMILY_IPV6) {
+    *port_out = ntohs(((const chif_net_ipv6_address*)address)->port);
+  } else {
+    return CHIF_NET_RESULT_INVALID_ADDRESS_FAMILY;
   }
 
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_get_bytes_available(const chif_net_socket socket,
                              unsigned long* bytes_available_out)
 {
@@ -911,14 +1079,14 @@ chif_net_get_bytes_available(const chif_net_socket socket,
   return CHIF_NET_RESULT_SUCCESS;
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_reuse_addr(const chif_net_socket socket, const chif_net_bool reuse)
 {
   return _chif_net_setsockopt(
     socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_reuse_port(const chif_net_socket socket, const chif_net_bool reuse)
 {
 #if defined(CHIF_NET_HAS_TCP_DETAILS)
@@ -931,7 +1099,7 @@ chif_net_set_reuse_port(const chif_net_socket socket, const chif_net_bool reuse)
 #endif
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_keepalive(const chif_net_socket socket,
                        const chif_net_bool keepalive)
 {
@@ -939,7 +1107,7 @@ chif_net_set_keepalive(const chif_net_socket socket,
     socket, SOL_SOCKET, SO_KEEPALIVE, &keepalive, sizeof(keepalive));
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_broadcast(const chif_net_socket socket,
                        const chif_net_bool broadcast)
 {
@@ -947,7 +1115,7 @@ chif_net_set_broadcast(const chif_net_socket socket,
     socket, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_recv_timeout(const chif_net_socket socket, const int time_ms)
 {
 #if defined(CHIF_NET_BERKLEY_SOCKET)
@@ -965,7 +1133,7 @@ chif_net_set_recv_timeout(const chif_net_socket socket, const int time_ms)
 #endif
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_send_timeout(const chif_net_socket socket, const int time_ms)
 {
 #if defined(CHIF_NET_BERKLEY_SOCKET)
@@ -983,7 +1151,7 @@ chif_net_set_send_timeout(const chif_net_socket socket, const int time_ms)
 #endif
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_tcp_set_user_timeout(const chif_net_socket socket, const int time_ms)
 {
 #if defined(CHIF_NET_HAS_TCP_DETAILS)
@@ -996,7 +1164,7 @@ chif_net_tcp_set_user_timeout(const chif_net_socket socket, const int time_ms)
 #endif
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_tcp_set_nodelay(const chif_net_socket socket,
                          const chif_net_bool nodelay)
 {
@@ -1004,7 +1172,7 @@ chif_net_tcp_set_nodelay(const chif_net_socket socket,
     socket, IPPROTO_TCP, TCP_NODELAY, (char*)&nodelay, sizeof(nodelay));
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_tcp_set_syncnt(const chif_net_socket socket, const int count)
 {
 #if defined(CHIF_NET_HAS_TCP_DETAILS)
@@ -1020,13 +1188,13 @@ chif_net_tcp_set_syncnt(const chif_net_socket socket, const int count)
 #endif
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_ttl(const chif_net_socket socket, const int ttl)
 {
   return _chif_net_setsockopt(socket, IPPROTO_IP, IP_TTL, &ttl, sizeof(ttl));
 }
 
-CHIF_NET_INLINE chif_net_result
+chif_net_result
 chif_net_set_own_iphdr(const chif_net_socket socket, const int provide_own_hdr)
 {
   return _chif_net_setsockopt(
@@ -1034,7 +1202,7 @@ chif_net_set_own_iphdr(const chif_net_socket socket, const int provide_own_hdr)
 }
 
 // TODO remove?
-/* CHIF_NET_INLINE chif_net_result */
+/* chif_net_result */
 /* chif_net_icmp_build(uint8_t* buf, */
 /*                     size_t* bufsize, */
 /*                     const void* data, */
@@ -1073,7 +1241,7 @@ chif_net_set_own_iphdr(const chif_net_socket socket, const int provide_own_hdr)
 /* #endif */
 /* } */
 
-CHIF_NET_INLINE const char*
+const char*
 chif_net_result_to_string(const chif_net_result result)
 {
   switch (result) {
@@ -1161,7 +1329,7 @@ chif_net_result_to_string(const chif_net_result result)
   return "INTERNAL_CHIF_ERROR";
 }
 
-CHIF_NET_INLINE const char*
+const char*
 chif_net_address_family_to_string(const chif_net_address_family address_family)
 {
   switch (address_family) {
@@ -1177,7 +1345,7 @@ chif_net_address_family_to_string(const chif_net_address_family address_family)
   }
 }
 
-CHIF_NET_INLINE const char*
+const char*
 chif_net_transport_protocol_to_string(
   const chif_net_transport_protocol transport_protocol)
 {

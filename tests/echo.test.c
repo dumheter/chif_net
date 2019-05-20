@@ -75,7 +75,6 @@ run_echo_test(AlfTestState* state, const echo_args* args)
 
   chif_net_socket client;
   OK_OR_RET(chif_net_open_socket(&client, args->proto, args->af));
-  OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
 
   chif_net_any_address client_addr;
   OK_OR_RET(chif_net_create_address((chif_net_address*)&client_addr,
@@ -86,6 +85,9 @@ run_echo_test(AlfTestState* state, const echo_args* args)
 
   OK_OR_RET(chif_net_connect(client, (chif_net_address*)&client_addr));
 
+  chif_net_port p;
+  chif_net_port_from_address((chif_net_address*)&client_addr, &p);
+
   chif_net_socket server_client = CHIF_NET_INVALID_SOCKET;
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     int can_read;
@@ -93,6 +95,11 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(can_read == CHIF_NET_TRUE);
 
     chif_net_any_address unused;
+    if (args->af == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+      unused.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+    } else {
+      unused.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+    }
     OK_OR_RET(
       chif_net_accept(server, (chif_net_address*)&unused, &server_client));
   }
@@ -122,6 +129,11 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_read(*cli, (uint8_t*)inbuf, inbuflen, &inbytes));
   } else {
+    if (args->af == CHIF_NET_ADDRESS_FAMILY_IPV4) {
+      from_addr.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+    } else {
+      from_addr.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+    }
     OK_OR_RET(chif_net_readfrom(*cli,
                                 (uint8_t*)inbuf,
                                 inbuflen,

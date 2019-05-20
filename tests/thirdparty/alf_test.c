@@ -302,14 +302,14 @@ _alfHighPerformanceTimer()
 /** Default suite setup function that does nothing **/
 static void
 _alfDefaultSuiteSetup(AlfTestSuite* suite)
-{}
+{(void)suite;}
 
 // -------------------------------------------------------------------------- //
 
 /** Default suite teardown function that does nothing **/
 static void
 _alfDefaultSuiteTeardown(AlfTestSuite* suite)
-{}
+{(void)suite;}
 
 // -------------------------------------------------------------------------- //
 
@@ -654,6 +654,8 @@ alfCheckMemEq(AlfTestState* state,
               INT_TYPE line,
               const char* reason)
 {
+  (void)var0;
+  (void)var1;
   char* message = alfTestFormatString("MEM_EQ(%s == %s)", m0, m0);
   INT_TYPE predicate =
     (m0 == NULL && m1 == NULL) || (m0 && m1 && memcmp(m0, m1, size) == 0);
@@ -673,6 +675,8 @@ alfCheckStrEq(AlfTestState* state,
               INT_TYPE line,
               const char* reason)
 {
+  (void)var0;
+  (void)var1;
   char* message = alfTestFormatString("STR_EQ(%s == %s)", str0, str1);
   INT_TYPE predicate =
     (str0 == NULL && str1 == NULL) || (str0 && str1 && strcmp(str0, str1) == 0);

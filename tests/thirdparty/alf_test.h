@@ -332,7 +332,7 @@ extern "C"
    * \details
    * Represents a test suite which is a collection of tests.
    */
-  typedef struct tag_AlfTestSuite AlfTestSuite;
+  struct AlfTestSuite;
 
   // --------------------------------------------------------------------------
   // //
@@ -345,7 +345,7 @@ extern "C"
    * Represents the state during testing. An object of this type is the argument
    * of each test function.
    */
-  typedef struct tag_AlfTestState AlfTestState;
+  struct AlfTestState;
 
   // --------------------------------------------------------------------------
   // //
