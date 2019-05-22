@@ -193,21 +193,14 @@ typedef struct
 } chif_net_ipv6_address;
 
 /**
- * Beware to not stack allocate this struct, since it won't hold any address.
+ * For best performance, explicitly use chif_netipv4_address when you can,
+ * and cast it to chif_net_address for the function calls.
  */
 typedef struct
 {
   uint16_t address_family;
+  uint8_t data[sizeof(chif_net_ipv6_address) - sizeof(uint16_t)];
 } chif_net_address;
-
-/**
- * Memory safe to use with any address families.
- */
-typedef union
-{
-  chif_net_ipv4_address ipv4_address;
-  chif_net_ipv6_address ipv6_address;
-} chif_net_any_address;
 
 /**
  * @param socket The socket to check the events for.
@@ -444,23 +437,24 @@ chif_net_poll(chif_net_check* check,
               int* ready_count_out,
               const int timeout_ms);
 
-  /**
-   * Is there any data waiting to be read?
-   *
-   * Note: If the socket is in a listening state, it will instead check if
-   * there is any pending connection waiting to be accepted.
-   *
-   * See chif_net_get_bytes_available to get amount of bytes that can be read.
-   *
-   * @param socket
-   * @param can_read_out
-   * @param timeout_ms How long should we wait before accepting a negative
-   * response?
-   * @return
-   */
-  chif_net_result chif_net_can_read(const chif_net_socket socket,
-                                    int* can_read_out,
-                                    const int timeout_ms);
+/**
+ * Is there any data waiting to be read?
+ *
+ * Note: If the socket is in a listening state, it will instead check if
+ * there is any pending connection waiting to be accepted.
+ *
+ * See chif_net_get_bytes_available to get amount of bytes that can be read.
+ *
+ * @param socket
+ * @param can_read_out
+ * @param timeout_ms How long should we wait before accepting a negative
+ * response?
+ * @return
+ */
+chif_net_result
+chif_net_can_read(const chif_net_socket socket,
+                  int* can_read_out,
+                  const int timeout_ms);
 
 /**
  * Can we write data?

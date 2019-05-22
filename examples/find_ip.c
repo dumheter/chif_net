@@ -68,14 +68,14 @@ find_LAN_address()
   ok_or_die(chif_net_open_socket(&sock, proto, af));
 
   printf("connecting to Google's DNS\n");
-  chif_net_any_address google_dns_addr;
+  chif_net_address google_dns_addr;
 #define GOOGLE_DNS_IP "8.8.8.8"
 
   const char* dns_port = "53";
 
   ok_or_die(chif_net_create_address(
-    (chif_net_address*)&google_dns_addr, GOOGLE_DNS_IP, dns_port, af, proto));
-  ok_or_die(chif_net_connect(sock, (chif_net_address*)&google_dns_addr));
+    &google_dns_addr, GOOGLE_DNS_IP, dns_port, af, proto));
+  ok_or_die(chif_net_connect(sock, &google_dns_addr));
 
   {
     printf("ip and port from socket\n");

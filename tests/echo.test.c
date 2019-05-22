@@ -50,14 +50,11 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   OK_OR_RET(chif_net_open_socket(&server, args->proto, args->af));
   OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
 
-  chif_net_any_address server_addr;
-  OK_OR_RET(chif_net_create_address((chif_net_address*)&server_addr,
-                                    CHIF_NET_ANY_ADDRESS,
-                                    portstr,
-                                    args->af,
-                                    args->proto));
+  chif_net_address server_addr;
+  OK_OR_RET(chif_net_create_address(
+    &server_addr, CHIF_NET_ANY_ADDRESS, portstr, args->af, args->proto));
 
-  OK_OR_RET(chif_net_bind(server, (chif_net_address*)&server_addr));
+  OK_OR_RET(chif_net_bind(server, &server_addr));
 
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_listen(server, CHIF_NET_DEFAULT_BACKLOG));
@@ -66,17 +63,14 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   chif_net_socket client;
   OK_OR_RET(chif_net_open_socket(&client, args->proto, args->af));
 
-  chif_net_any_address client_addr;
-  OK_OR_RET(chif_net_create_address((chif_net_address*)&client_addr,
-                                    args->addr,
-                                    portstr,
-                                    args->af,
-                                    args->proto));
+  chif_net_address client_addr;
+  OK_OR_RET(chif_net_create_address(
+    &client_addr, args->addr, portstr, args->af, args->proto));
 
-  OK_OR_RET(chif_net_connect(client, (chif_net_address*)&client_addr));
+  OK_OR_RET(chif_net_connect(client, &client_addr));
 
   chif_net_port p;
-  chif_net_port_from_address((chif_net_address*)&client_addr, &p);
+  chif_net_port_from_address(&client_addr, &p);
 
   chif_net_socket server_client = CHIF_NET_INVALID_SOCKET;
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
@@ -84,14 +78,13 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(chif_net_can_read(server, &can_read, 50));
     OK_OR_RET(can_read == CHIF_NET_TRUE);
 
-    chif_net_any_address unused;
+    chif_net_address unused;
     if (args->af == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-      unused.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+      unused.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
     } else {
-      unused.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+      unused.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
     }
-    OK_OR_RET(
-      chif_net_accept(server, (chif_net_address*)&unused, &server_client));
+    OK_OR_RET(chif_net_accept(server, &unused, &server_client));
   }
 
   enum
@@ -114,21 +107,18 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ? &server_client : &server;
   OK_OR_RET(chif_net_can_read(*cli, &can_read, 50));
   OK_OR_RET(can_read == CHIF_NET_TRUE);
-  chif_net_any_address from_addr;
+  chif_net_address from_addr;
   CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(from_addr);
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_read(*cli, (uint8_t*)inbuf, inbuflen, &inbytes));
   } else {
     if (args->af == CHIF_NET_ADDRESS_FAMILY_IPV4) {
-      from_addr.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+      from_addr.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
     } else {
-      from_addr.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+      from_addr.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
     }
-    OK_OR_RET(chif_net_readfrom(*cli,
-                                (uint8_t*)inbuf,
-                                inbuflen,
-                                &inbytes,
-                                (chif_net_address*)&from_addr));
+    OK_OR_RET(
+      chif_net_readfrom(*cli, (uint8_t*)inbuf, inbuflen, &inbytes, &from_addr));
   }
   OK_OR_RET(inbytes == bytes);
   OK_OR_RET(memcmp(buf, inbuf, inbytes) == 0);
@@ -137,11 +127,8 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     OK_OR_RET(chif_net_write(*cli, (uint8_t*)inbuf, inbytes, &bytes2));
   } else {
-    OK_OR_RET(chif_net_writeto(*cli,
-                               (uint8_t*)inbuf,
-                               inbytes,
-                               &bytes2,
-                               (const chif_net_address*)&from_addr));
+    OK_OR_RET(
+      chif_net_writeto(*cli, (uint8_t*)inbuf, inbytes, &bytes2, &from_addr));
   }
   OK_OR_RET(bytes2 == inbytes);
 

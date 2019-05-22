@@ -37,14 +37,12 @@ duckduckgo(AlfTestState* state)
     state, CHIF_NET_RESULT_SUCCESS == chif_net_open_socket(&sock, proto, af));
 
   const char* site = "www.duckduckgo.com";
-  chif_net_any_address addr;
+  chif_net_address addr;
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_create_address(
-                     (chif_net_address*)&addr, site, "http", af, proto));
+                   chif_net_create_address(&addr, site, "http", af, proto));
   ALF_CHECK_TRUE(state,
-                 CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_connect(sock, (chif_net_address*)&addr));
+                 CHIF_NET_RESULT_SUCCESS == chif_net_connect(sock, &addr));
 
   // some invalid request to get a 400 response.
   const char* request = "GET /robot.txt HTTP/1.1\
@@ -89,10 +87,9 @@ bad_site(AlfTestState* state)
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
   const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   const char* site = "no site";
-  chif_net_any_address addr;
+  chif_net_address addr;
   ALF_CHECK_FALSE_R(state,
                     CHIF_NET_RESULT_SUCCESS ==
-                      chif_net_create_address(
-                        (chif_net_address*)&addr, site, "http", af, proto),
+                      chif_net_create_address(&addr, site, "http", af, proto),
                     "attempting to lookup address no site");
 }

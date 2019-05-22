@@ -405,7 +405,6 @@ _chif_net_poll(const chif_net_socket socket,
         return CHIF_NET_RESULT_INVALID_FILE_DESCRIPTOR;
       }
     }
-
   }
 
   return CHIF_NET_RESULT_SUCCESS;
@@ -1031,9 +1030,8 @@ chif_net_ip_from_socket(const chif_net_socket socket,
                         char* str_out,
                         const size_t strlen)
 {
-  chif_net_any_address address;
-  // can hold both ipv4 and ipv6.
-  address.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+  chif_net_address address;
+  address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
 
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);
@@ -1072,9 +1070,8 @@ chif_net_ip_from_address(const chif_net_address* address,
 chif_net_result
 chif_net_port_from_socket(const chif_net_socket socket, chif_net_port* port_out)
 {
-  chif_net_any_address address;
-  // can hold both ipv4 and ipv6.
-  address.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+  chif_net_address address;
+  address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
 
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);

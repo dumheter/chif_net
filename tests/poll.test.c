@@ -10,8 +10,8 @@
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -46,8 +46,8 @@ poll_test(AlfTestState* state)
 
   { // polling a opened, then closed socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV4));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     OK_OR_RET(chif_net_close_socket(&socket));
     check.socket = socket;
@@ -61,8 +61,8 @@ poll_test(AlfTestState* state)
 
   { // polling an open ipv4 tcp socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV4));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
     check.request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -90,8 +90,8 @@ poll_test(AlfTestState* state)
 
   { // polling an open ipv6 tcp socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV6));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_TCP, CHIF_NET_ADDRESS_FAMILY_IPV6));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
     check.request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -117,8 +117,8 @@ poll_test(AlfTestState* state)
 
   { // polling an open ipv6 udp socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV6));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV6));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
     check.request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -144,8 +144,8 @@ poll_test(AlfTestState* state)
 
   { // polling an open ipv4 udp socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV4));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
     check.request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -171,14 +171,14 @@ poll_test(AlfTestState* state)
 
   { // polling one open and two closed ipv4 udp socket
     chif_net_socket socket;
-    OK_OR_RET(chif_net_open_socket(&socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV4));
+    OK_OR_RET(chif_net_open_socket(
+      &socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     chif_net_check checks[3];
     checks[0].socket = CHIF_NET_INVALID_SOCKET;
     checks[0].request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE |
-                           CHIF_NET_CHECK_EVENT_ERROR;
+                               CHIF_NET_CHECK_EVENT_WRITE |
+                               CHIF_NET_CHECK_EVENT_ERROR;
     checks[0].return_events = 0;
     checks[1].socket = socket;
     checks[1].request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -194,11 +194,12 @@ poll_test(AlfTestState* state)
     ALF_CHECK_TRUE(state, ready_count == 1);
     ALF_CHECK_FALSE(state, checks[1].return_events & CHIF_NET_CHECK_EVENT_READ);
     ALF_CHECK_TRUE(state, checks[1].return_events & CHIF_NET_CHECK_EVENT_WRITE);
-    ALF_CHECK_FALSE(state, checks[1].return_events & CHIF_NET_CHECK_EVENT_ERROR);
     ALF_CHECK_FALSE(state,
-                   checks[1].return_events & CHIF_NET_CHECK_EVENT_CLOSED);
+                    checks[1].return_events & CHIF_NET_CHECK_EVENT_ERROR);
     ALF_CHECK_FALSE(state,
-                   checks[1].return_events & CHIF_NET_CHECK_EVENT_INVALID);
+                    checks[1].return_events & CHIF_NET_CHECK_EVENT_CLOSED);
+    ALF_CHECK_FALSE(state,
+                    checks[1].return_events & CHIF_NET_CHECK_EVENT_INVALID);
 
     OK_OR_RET(chif_net_close_socket(&socket));
   }
@@ -207,40 +208,47 @@ poll_test(AlfTestState* state)
 
   { // Two sockets send data to each other, and poll shows can READ, IPv4 UDP
     chif_net_socket socka;
-    OK_OR_RET(chif_net_open_socket(&socka, CHIF_NET_TRANSPORT_PROTOCOL_UDP,
-                                   CHIF_NET_ADDRESS_FAMILY_IPV4));
+    OK_OR_RET(chif_net_open_socket(
+      &socka, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socka, CHIF_NET_TRUE));
     chif_net_socket sockb;
     OK_OR_RET(chif_net_open_socket(
       &sockb, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(sockb, CHIF_NET_TRUE));
 
-    chif_net_any_address anyaddr;
-    anyaddr.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
-    OK_OR_RET(chif_net_create_address((chif_net_address*)&anyaddr, "localhost", CHIF_NET_ANY_PORT, CHIF_NET_ADDRESS_FAMILY_IPV4, CHIF_NET_TRANSPORT_PROTOCOL_TCP));
+    chif_net_address anyaddr;
+    anyaddr.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+    OK_OR_RET(chif_net_create_address(&anyaddr,
+                                      "localhost",
+                                      CHIF_NET_ANY_PORT,
+                                      CHIF_NET_ADDRESS_FAMILY_IPV4,
+                                      CHIF_NET_TRANSPORT_PROTOCOL_TCP));
 
-    OK_OR_RET(chif_net_bind(socka, (chif_net_address*)&anyaddr));
-    OK_OR_RET(chif_net_bind(sockb, (chif_net_address*)&anyaddr));
+    OK_OR_RET(chif_net_bind(socka, &anyaddr));
+    OK_OR_RET(chif_net_bind(sockb, &anyaddr));
 
-    chif_net_any_address addra;
-    addra.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
-    OK_OR_RET(chif_net_address_from_socket(socka, (chif_net_address*)&addra));
-    chif_net_any_address addrb;
-    addrb.ipv4_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
-    OK_OR_RET(chif_net_address_from_socket(sockb, (chif_net_address*)&addrb));
+    chif_net_address addra;
+    addra.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+    OK_OR_RET(chif_net_address_from_socket(socka, &addra));
+    chif_net_address addrb;
+    addrb.address_family = CHIF_NET_ADDRESS_FAMILY_IPV4;
+    OK_OR_RET(chif_net_address_from_socket(sockb, &addrb));
 
-    enum {bufsize = 6};
-    uint8_t buf[bufsize] = {0, 1, 2, 3, 4, 5};
+    enum
+    {
+      bufsize = 6
+    };
+    uint8_t buf[bufsize] = { 0, 1, 2, 3, 4, 5 };
     int bytes;
 
-    OK_OR_RET(chif_net_writeto(socka, buf, bufsize, &bytes, (chif_net_address*)&addrb));
-    OK_OR_RET(chif_net_writeto(sockb, buf, bufsize, &bytes, (chif_net_address*)&addra));
+    OK_OR_RET(chif_net_writeto(socka, buf, bufsize, &bytes, &addrb));
+    OK_OR_RET(chif_net_writeto(sockb, buf, bufsize, &bytes, &addra));
 
     chif_net_check checks[2];
     checks[0].socket = socka;
     checks[0].request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE |
-                           CHIF_NET_CHECK_EVENT_ERROR;
+                               CHIF_NET_CHECK_EVENT_WRITE |
+                               CHIF_NET_CHECK_EVENT_ERROR;
     checks[0].return_events = 0;
     checks[1].socket = sockb;
     checks[1].request_events = CHIF_NET_CHECK_EVENT_READ |
@@ -251,9 +259,12 @@ poll_test(AlfTestState* state)
 
     ALF_CHECK_TRUE(state, ready_count == 2);
     for (int i = 0; i < 2; i++) {
-      ALF_CHECK_TRUE(state, checks[i].return_events & CHIF_NET_CHECK_EVENT_READ);
-      ALF_CHECK_TRUE(state, checks[i].return_events & CHIF_NET_CHECK_EVENT_WRITE);
-      ALF_CHECK_FALSE(state, checks[i].return_events & CHIF_NET_CHECK_EVENT_ERROR);
+      ALF_CHECK_TRUE(state,
+                     checks[i].return_events & CHIF_NET_CHECK_EVENT_READ);
+      ALF_CHECK_TRUE(state,
+                     checks[i].return_events & CHIF_NET_CHECK_EVENT_WRITE);
+      ALF_CHECK_FALSE(state,
+                      checks[i].return_events & CHIF_NET_CHECK_EVENT_ERROR);
       ALF_CHECK_FALSE(state,
                       checks[i].return_events & CHIF_NET_CHECK_EVENT_CLOSED);
       ALF_CHECK_FALSE(state,

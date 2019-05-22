@@ -61,8 +61,7 @@ main()
     tcp_tests_count = 1
   };
   AlfTest tcp_tests[tcp_tests_count];
-  tcp_tests[0] =
-    (AlfTest){ .name = "tcp", .TestFunction = tcp_test };
+  tcp_tests[0] = (AlfTest){ .name = "tcp", .TestFunction = tcp_test };
   suites[1] = alfCreateTestSuite("tcp", tcp_tests, tcp_tests_count);
 
   // ============================================================ //

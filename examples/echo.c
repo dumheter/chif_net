@@ -87,11 +87,11 @@ run_server(int argc, char** argv)
   char portstr[portstrlen];
   snprintf(portstr, portstrlen, "%u%c", port, '\0');
   DEBUG_PRINTF("bind socket on port [%s]\n", portstr);
-  chif_net_any_address bindaddr;
+  chif_net_address bindaddr;
 
   OK_OR_DIE(chif_net_create_address(
-    (chif_net_address*)&bindaddr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
-  OK_OR_DIE(chif_net_bind(sock, (chif_net_address*)&bindaddr));
+    &bindaddr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
+  OK_OR_DIE(chif_net_bind(sock, &bindaddr));
 
   chif_net_port bound_port;
   OK_OR_DIE(chif_net_port_from_socket(sock, &bound_port));

@@ -38,28 +38,25 @@ tcp_test(AlfTestState* state)
   OK_OR_RET(chif_net_set_reuse_addr(sock, CHIF_NET_TRUE));
 
   const char* portstr = "1336\0";
-  chif_net_any_address addr;
+  chif_net_address addr;
   OK_OR_RET(
-      chif_net_create_address((chif_net_address*)&addr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
+    chif_net_create_address(&addr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
 
-  OK_OR_RET(
-      chif_net_bind(sock, (chif_net_address*)&addr));
+  OK_OR_RET(chif_net_bind(sock, (chif_net_address*)&addr));
 
   chif_net_port bound_port;
-  OK_OR_RET(
-      CHIF_NET_RESULT_SUCCESS ==
-      chif_net_port_from_socket(sock, &bound_port));
+  OK_OR_RET(CHIF_NET_RESULT_SUCCESS ==
+            chif_net_port_from_socket(sock, &bound_port));
   char bound_ip[CHIF_NET_IPVX_STRING_LENGTH];
   OK_OR_RET(
-      CHIF_NET_RESULT_SUCCESS ==
-      chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
+    CHIF_NET_RESULT_SUCCESS ==
+    chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
   ALF_CHECK_TRUE(state, bound_port == 1336);
   const char* correct_ip = "0.0.0.0";
   ALF_CHECK_TRUE(state, 0 == memcmp(bound_ip, correct_ip, 7));
 
-  OK_OR_RET(
-      CHIF_NET_RESULT_SUCCESS ==
-      chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
+  OK_OR_RET(CHIF_NET_RESULT_SUCCESS ==
+            chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
 
   /* printf("waiting to accept client\n"); */
   /* chif_net_socket clisock; */
@@ -73,7 +70,8 @@ tcp_test(AlfTestState* state)
   /* chif_net_port cliport; */
   /* OK_OR_RET( */
   /*     */
-  /*     chif_net_ip_from_address((chif_net_address*)&cliaddr, cliip, CHIF_NET_IPVX_STRING_LENGTH)); */
+  /*     chif_net_ip_from_address((chif_net_address*)&cliaddr, cliip,
+   * CHIF_NET_IPVX_STRING_LENGTH)); */
   /* OK_OR_RET( */
   /*     chif_net_port_from_address((chif_net_address*)&cliaddr, &cliport)); */
   /* printf("client connected from %s:%d\n\n", cliip, cliport); */
