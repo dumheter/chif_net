@@ -79,21 +79,42 @@ typedef unsigned long nfds_t;
 
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_TRANSPORT_PROTOCOL_TCP ==
                          (int64_t)IPPROTO_TCP,
-                       chif_net_ipproto_tcp_correct_value);
+                       ipproto_tcp_correct_value);
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_TRANSPORT_PROTOCOL_UDP ==
                          (int64_t)IPPROTO_UDP,
-                       chif_net_ipproto_udp_correct_value);
+                       ipproto_udp_correct_value);
 
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_ADDRESS_FAMILY_IPV4 ==
                          (int64_t)AF_INET,
-                       chif_net_af_ipv4_correct_value);
+                       af_ipv4_correct_value);
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_ADDRESS_FAMILY_IPV6 ==
                          (int64_t)AF_INET6,
-                       chif_net_af_ipv6_correct_value);
+                       af_ipv6_correct_value);
 
 CHIF_NET_STATIC_ASSERT(sizeof(chif_net_ipv6_address) ==
                          sizeof(struct sockaddr_in6),
-                       chif_net_ipv6_address_struct_correct_size);
+                       ipv6_address_struct_correct_size);
+
+#if defined(CHIF_NET_WINSOCK2)
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_READ == POLLRDNORM,
+                       check_read_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_WRITE == POLLWRNORM,
+                       check_write_correct_value);
+#else
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_READ == POLLIN,
+                       check_read_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_WRITE == POLLOUT,
+                       check_write_correct_value);
+#endif
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_ERROR == POLLERR,
+                       check_error_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_CLOSED == POLLHUP,
+                       check_closed_correct_value);
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_INVALID == POLLNVAL,
+                       check_invalid_correct_value);
+
+CHIF_NET_STATIC_ASSERT(sizeof(chif_net_check) == sizeof(struct pollfd),
+                       check_struct_correct_size);
 
 // ============================================================ //
 // Static functions
@@ -359,36 +380,32 @@ _chif_net_poll(const chif_net_socket socket,
                const short events,
                const int timeout_ms)
 {
-  struct pollfd pfd;
-  pfd.fd = socket;
-  pfd.events = events;
-  pfd.revents = 0;
-  const nfds_t fds_count = 1;
+  chif_net_check check;
+  check.socket = socket;
+  check.request_events = events;
+  check.return_events = 0;
+  const int check_count = 1;
 
-#if defined(CHIF_NET_WINSOCK2)
-  int pres = WSAPoll(&pfd, fds_count, timeout_ms);
-#else // if defined(CHIF_NET_BERKLEY_SOCKET)
-  int pres = poll(&pfd, fds_count, timeout_ms);
-#endif
+  chif_net_result res = chif_net_poll(&check, check_count, res_out, timeout_ms);
 
-  if (pres == 0) {
-    *res_out = 0;
-  } else if (pres > 0) {
-    if (pfd.revents & events) {
+  // TODO
+  if (res != CHIF_NET_RESULT_SUCCESS) {
+    return res;
+  }
+  if (*res_out > 0) {
+    if (check.return_events & events) {
       *res_out = 1;
     } else {
       *res_out = 0;
-      if (pfd.revents & POLLERR) {
+      if (check.return_events & POLLERR) {
         return CHIF_NET_RESULT_FAIL;
-      } else if (pfd.revents & POLLHUP) {
+      } else if (check.return_events & POLLHUP) {
         return CHIF_NET_RESULT_CONNECTION_CLOSED;
-      } else if (pfd.revents & POLLNVAL) {
+      } else if (check.return_events & POLLNVAL) {
         return CHIF_NET_RESULT_INVALID_FILE_DESCRIPTOR;
       }
     }
-  } else {
-    *res_out = 0;
-    return _chif_net_get_specific_result_type();
+
   }
 
   return CHIF_NET_RESULT_SUCCESS;
@@ -833,6 +850,25 @@ chif_net_writeto(const chif_net_socket socket,
 }
 
 chif_net_result
+chif_net_poll(chif_net_check* check,
+              const size_t check_count,
+              int* ready_count_out,
+              const int timeout_ms)
+{
+#if defined(CHIF_NET_WINSOCK2)
+  *ready_count_out = WSAPoll((struct pollfd*)&pfd, fds_count, timeout_ms);
+#else
+  *ready_count_out = poll((struct pollfd*)check, check_count, timeout_ms);
+#endif
+
+  if (*ready_count_out < 0) {
+    return _chif_net_get_specific_result_type();
+  }
+
+  return CHIF_NET_RESULT_SUCCESS;
+}
+
+chif_net_result
 chif_net_can_read(const chif_net_socket socket,
                   int* can_read_out,
                   const int timeout_ms)
@@ -996,6 +1032,9 @@ chif_net_ip_from_socket(const chif_net_socket socket,
                         const size_t strlen)
 {
   chif_net_any_address address;
+  // can hold both ipv4 and ipv6.
+  address.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);
   if (result != CHIF_NET_RESULT_SUCCESS) {
@@ -1034,6 +1073,9 @@ chif_net_result
 chif_net_port_from_socket(const chif_net_socket socket, chif_net_port* port_out)
 {
   chif_net_any_address address;
+  // can hold both ipv4 and ipv6.
+  address.ipv6_address.address_family = CHIF_NET_ADDRESS_FAMILY_IPV6;
+
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);
 

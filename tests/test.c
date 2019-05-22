@@ -36,7 +36,7 @@ main()
 
   enum
   {
-    suites_count = 2
+    suites_count = 4
   };
   AlfTestSuite* suites[suites_count];
 
@@ -54,6 +54,29 @@ main()
   suites[0] = alfCreateTestSuite("Connect", connect_tests, connect_tests_count);
 
   // ============================================================ //
+  // tcp
+  // ============================================================ //
+  enum
+  {
+    tcp_tests_count = 1
+  };
+  AlfTest tcp_tests[tcp_tests_count];
+  tcp_tests[0] =
+    (AlfTest){ .name = "tcp", .TestFunction = tcp_test };
+  suites[1] = alfCreateTestSuite("tcp", tcp_tests, tcp_tests_count);
+
+  // ============================================================ //
+  // tcp
+  // ============================================================ //
+  enum
+  {
+    poll_tests_count = 1
+  };
+  AlfTest poll_tests[poll_tests_count];
+  poll_tests[0] = (AlfTest){ .name = "poll", .TestFunction = poll_test };
+  suites[2] = alfCreateTestSuite("poll", poll_tests, poll_tests_count);
+
+  // ============================================================ //
   // echo
   // ============================================================ //
   enum
@@ -65,7 +88,7 @@ main()
   echo_tests[2] = (AlfTest){ .name = "tcp & ipv6", .TestFunction = tcp_ipv6 };
   echo_tests[1] = (AlfTest){ .name = "udp & ipv4", .TestFunction = udp_ipv4 };
   echo_tests[3] = (AlfTest){ .name = "udp & ipv6", .TestFunction = udp_ipv6 };
-  suites[1] = alfCreateTestSuite("Echo", echo_tests, echo_tests_count);
+  suites[3] = alfCreateTestSuite("Echo", echo_tests, echo_tests_count);
 
   const uint32_t fails = alfRunSuites(suites, suites_count);
   for (int i = 0; i < suites_count; i++) {

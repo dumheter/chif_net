@@ -116,6 +116,7 @@ typedef uint64_t chif_net_socket;
 typedef int chif_net_socket;
 #endif
 
+// TODO convert them back to errno in order to use strerrno()?
 typedef enum
 {
   CHIF_NET_RESULT_UNKNOWN = 0,
@@ -199,11 +200,59 @@ typedef struct
   uint16_t address_family;
 } chif_net_address;
 
+/**
+ * Memory safe to use with any address families.
+ */
 typedef union
 {
   chif_net_ipv4_address ipv4_address;
   chif_net_ipv6_address ipv6_address;
 } chif_net_any_address;
+
+/**
+ * @param socket The socket to check the events for.
+ * @param request_events Fill out by bitmasking with chif_net_check_event
+ * values.
+ * @param events The returned events, check by bitmasking with
+ * chif_net_check_event.
+ */
+typedef struct
+{
+  chif_net_socket socket;
+  short request_events;
+  short return_events;
+} chif_net_check;
+
+/**
+ * Use in conjunction with chif_net_check.
+ *
+ * @param CHIF_NET_CHECK_EVENT_READ Can the socket read without blocking?
+ * @param CHIF_NET_CHECK_EVENT_WRITE Can the socket write without blocking?
+ * (Given that we don't write more than the socket can handle.)
+ * @param CHIF_NET_CHECK_EVENT_ERROR Does the socket have any error?
+ * @param CHIF_NET_CHECK_EVENT_CLOSED Is the socket in a closed state?
+ * This only makes sense when using a connection based transport protocol.
+ * NOTE: Ignored in request, will always be checked for.
+ * @param CHIF_NET_CHECK_EVENT_INVALID Is the socket invalid?
+ * NOTE: Ignored in request, will always be checked for.
+ */
+typedef enum
+{
+#if defined(CHIF_NET_WINSOCK2)
+  CHIF_NET_CHECK_EVENT_READ = 0x0001,
+  CHIF_NET_CHECK_EVENT_WRITE = 0x0004,
+  CHIF_NET_CHECK_EVENT_ERROR = 0x0008,
+  CHIF_NET_CHECK_EVENT_CLOSED = 0x0010,
+  CHIF_NET_CHECK_EVENT_INVALID = 0x0020
+#else
+  CHIF_NET_CHECK_EVENT_READ = 0x0001,
+  CHIF_NET_CHECK_EVENT_WRITE = 0x0004,
+  CHIF_NET_CHECK_EVENT_ERROR = 0x0008,
+  CHIF_NET_CHECK_EVENT_CLOSED = 0x0010,
+  CHIF_NET_CHECK_EVENT_INVALID = 0x0020
+#endif
+
+} chif_net_check_event;
 
 // ====================================================================== //
 // Definition
@@ -375,23 +424,43 @@ chif_net_writeto(const chif_net_socket socket,
                  const chif_net_address* to_address);
 
 /**
- * Is there any data waiting to be read?
+ * Check a/multiple socket(s) for events such as
  *
- * Note: If the socket is in a listening state, it will instead check if
- * there is any pending connection waiting to be accepted.
+ * CHIF_NET_CHECK_EVENT_READ - can the socket read without blocking?
+ * CHIF_NET_CHECK_EVENT_WRITE - can the socket write without blocking? (Given
+ * that we don't write more than the socket can handle.)
+ * CHIF_NET_CHECK_EVENT_ERROR - does the socket have any error?
  *
- * See chif_net_get_bytes_available to get amount of bytes that can be read.
- *
- * @param socket
- * @param can_read_out
- * @param timeout_ms How long should we wait before accepting a negative
- * response?
- * @return
+ * @param check Check struct(s).
+ * @param check_count How many check structures check has.
+ * @param read_count_out How many of the check structs that has events.
+ * NOTE: a value of 0 means the function timed out without any socket
+ * having an event.
+ * @param timeout_ms Maximum amount of time the call can wait before returning.
  */
 chif_net_result
-chif_net_can_read(const chif_net_socket socket,
-                  int* can_read_out,
-                  const int timeout_ms);
+chif_net_poll(chif_net_check* check,
+              const size_t check_count,
+              int* ready_count_out,
+              const int timeout_ms);
+
+  /**
+   * Is there any data waiting to be read?
+   *
+   * Note: If the socket is in a listening state, it will instead check if
+   * there is any pending connection waiting to be accepted.
+   *
+   * See chif_net_get_bytes_available to get amount of bytes that can be read.
+   *
+   * @param socket
+   * @param can_read_out
+   * @param timeout_ms How long should we wait before accepting a negative
+   * response?
+   * @return
+   */
+  chif_net_result chif_net_can_read(const chif_net_socket socket,
+                                    int* can_read_out,
+                                    const int timeout_ms);
 
 /**
  * Can we write data?
@@ -408,7 +477,8 @@ chif_net_can_write(const chif_net_socket socket,
                    const int timeout_ms);
 
 /**
- * Check if the socket has any errors.
+ * Check if the socket has any errors. This includes detecting a (cleanly)
+ * closed TCP connection.
  *
  * @param socket
  * @param timeout_ms How long should we wait before accepting a negative
@@ -437,6 +507,8 @@ chif_net_set_blocking(const chif_net_socket socket,
  *
  * @pre Ensure you allocate the appropriate amount of memory for
  * address_out. Size of the different address structure may differ.
+ * @pre Both name and service cannot be CHIF_NET_ANY_ADDRESS and
+ * CHIF_NET_ANY_PORT.
  * @param address_out Output address
  * @param name Example, "127.0.0.1" or "www.duckduckgo.com" or "localhost".
  * @param service Example, "http" or "80". May use CHIF_NET_ANY_PORT

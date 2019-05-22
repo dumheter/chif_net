@@ -23,9 +23,9 @@
  */
 
 #include "tests.h"
+#include "util.h"
 #include <chif_net.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 typedef struct
@@ -36,17 +36,7 @@ typedef struct
   const char* addr;
 } echo_args;
 
-#define OK_OR_RET(fn)                                                          \
-  {                                                                            \
-    const chif_net_result res = fn;                                            \
-    ALF_CHECK_TRUE(state, res == CHIF_NET_RESULT_SUCCESS);                     \
-    if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
-      printf("[chif_net] error [%s]", chif_net_result_to_string(res));         \
-      return 1;                                                                \
-    }                                                                          \
-  }
-
-int
+void
 run_echo_test(AlfTestState* state, const echo_args* args)
 {
   enum
@@ -165,8 +155,6 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   OK_OR_RET(chif_net_close_socket(&server));
   OK_OR_RET(chif_net_close_socket(&client));
   OK_OR_RET(chif_net_close_socket(cli));
-
-  return 0;
 }
 
 void
@@ -177,9 +165,7 @@ tcp_ipv4(AlfTestState* state)
   args.proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   args.port = 1337;
   args.addr = "localhost";
-
-  const int result = run_echo_test(state, &args);
-  ALF_CHECK_TRUE(state, result == 0);
+  run_echo_test(state, &args);
 }
 
 void
@@ -190,9 +176,7 @@ tcp_ipv6(AlfTestState* state)
   args.proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
   args.port = 1338;
   args.addr = "localhost";
-
-  const int result = run_echo_test(state, &args);
-  ALF_CHECK_TRUE(state, result == 0);
+  run_echo_test(state, &args);
 }
 
 void
@@ -203,9 +187,7 @@ udp_ipv4(AlfTestState* state)
   args.proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
   args.port = 1339;
   args.addr = "localhost";
-
-  const int result = run_echo_test(state, &args);
-  ALF_CHECK_TRUE(state, result == 0);
+  run_echo_test(state, &args);
 }
 
 void
@@ -216,7 +198,5 @@ udp_ipv6(AlfTestState* state)
   args.proto = CHIF_NET_TRANSPORT_PROTOCOL_UDP;
   args.port = 1340;
   args.addr = "localhost";
-
-  const int result = run_echo_test(state, &args);
-  ALF_CHECK_TRUE(state, result == 0);
+  run_echo_test(state, &args);
 }

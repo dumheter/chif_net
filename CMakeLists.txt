@@ -29,6 +29,8 @@ set(EXTRA_SRC
   tests/tests.h
   tests/connect.test.c
   tests/echo.test.c
+  tests/tcp.test.c
+  tests/poll.test.c
   examples/echo.c
   examples/echo.h
   )
