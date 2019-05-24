@@ -95,17 +95,10 @@ CHIF_NET_STATIC_ASSERT(sizeof(chif_net_ipv6_address) ==
                          sizeof(struct sockaddr_in6),
                        ipv6_address_struct_correct_size);
 
-#if defined(CHIF_NET_WINSOCK2)
-CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_READ == POLLRDNORM,
-                       check_read_correct_value);
-CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_WRITE == POLLWRNORM,
-                       check_write_correct_value);
-#else
-CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_READ == POLLIN,
-                       check_read_correct_value);
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_WRITE == POLLOUT,
                        check_write_correct_value);
-#endif
+CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_READ == POLLIN,
+                       check_read_correct_value);
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_ERROR == POLLERR,
                        check_error_correct_value);
 CHIF_NET_STATIC_ASSERT((int64_t)CHIF_NET_CHECK_EVENT_CLOSED == POLLHUP,
@@ -855,7 +848,7 @@ chif_net_poll(chif_net_check* check,
               const int timeout_ms)
 {
 #if defined(CHIF_NET_WINSOCK2)
-  *ready_count_out = WSAPoll((struct pollfd*)&pfd, fds_count, timeout_ms);
+  *ready_count_out = WSAPoll((struct pollfd*)check, (ULONG)check_count, timeout_ms);
 #else
   *ready_count_out = poll((struct pollfd*)check, check_count, timeout_ms);
 #endif
