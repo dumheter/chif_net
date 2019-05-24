@@ -35,8 +35,8 @@
  */
 
 #if defined(__cplusplus)
-// extern "C"
-//{
+extern "C"
+{
 #endif
 
 // ====================================================================== //
@@ -792,7 +792,7 @@ chif_net_transport_protocol_to_string(
   const chif_net_transport_protocol transport_protocol);
 
 #if defined(__cplusplus)
-//}
+}
 #endif
 
 #endif // CHIF_NET_H
