@@ -42,7 +42,7 @@ if (CHIF_NET_BUILD_EXTRA)
   add_executable(echo_server examples/echo_server_example.c)
   add_executable(echo_client examples/echo_client_example.c)
   add_executable(find_ip examples/find_ip.c)
-  add_executable(tests tests/test.c ${CHIF_NET_SRC} ${EXTRA_SRC})
+  add_executable(tests tests/test.c ${EXTRA_SRC})
 endif ()
 
 if (WIN32)
