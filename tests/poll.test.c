@@ -34,17 +34,16 @@ poll_test(AlfTestState* state)
   int ready_count;
   chif_net_check check;
 
-  
   { // polling an invalid socket
     check.socket = CHIF_NET_INVALID_SOCKET;
-    check.request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE;
+    check.request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     check.return_events = 0;
-    
-	const chif_net_result res = chif_net_poll(&check, 1, &ready_count, timeout_ms);
+
+    const chif_net_result res =
+      chif_net_poll(&check, 1, &ready_count, timeout_ms);
     ALF_CHECK_TRUE(state, ready_count == 0 || res != CHIF_NET_RESULT_SUCCESS);
   }
-
 
   { // polling a opened, then closed socket
     chif_net_socket socket;
@@ -53,11 +52,11 @@ poll_test(AlfTestState* state)
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     OK_OR_RET(chif_net_close_socket(&socket));
     check.socket = socket;
-    check.request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE;
+    check.request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     check.return_events = 0;
 
-	const chif_net_result res =
+    const chif_net_result res =
       chif_net_poll(&check, 1, &ready_count, timeout_ms);
     ALF_CHECK_TRUE(state, ready_count == 0 || res != CHIF_NET_RESULT_SUCCESS);
   }
@@ -70,8 +69,8 @@ poll_test(AlfTestState* state)
       &socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV6));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
-    check.request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE;
+    check.request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     check.return_events = 0;
     OK_OR_RET(chif_net_poll(&check, 1, &ready_count, timeout_ms));
 
@@ -96,8 +95,8 @@ poll_test(AlfTestState* state)
       &socket, CHIF_NET_TRANSPORT_PROTOCOL_UDP, CHIF_NET_ADDRESS_FAMILY_IPV4));
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     check.socket = socket;
-    check.request_events = CHIF_NET_CHECK_EVENT_READ |
-                           CHIF_NET_CHECK_EVENT_WRITE;
+    check.request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     check.return_events = 0;
     OK_OR_RET(chif_net_poll(&check, 1, &ready_count, timeout_ms));
 
@@ -123,16 +122,16 @@ poll_test(AlfTestState* state)
     OK_OR_RET(chif_net_set_reuse_addr(socket, CHIF_NET_TRUE));
     chif_net_check checks[3];
     checks[0].socket = CHIF_NET_INVALID_SOCKET;
-    checks[0].request_events = CHIF_NET_CHECK_EVENT_READ |
-                               CHIF_NET_CHECK_EVENT_WRITE;
+    checks[0].request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     checks[0].return_events = 0;
     checks[1].socket = socket;
-    checks[1].request_events = CHIF_NET_CHECK_EVENT_READ |
-                               CHIF_NET_CHECK_EVENT_WRITE;
+    checks[1].request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     checks[1].return_events = 0;
     checks[2].socket = CHIF_NET_INVALID_SOCKET;
-    checks[2].request_events = CHIF_NET_CHECK_EVENT_READ |
-                               CHIF_NET_CHECK_EVENT_WRITE;
+    checks[2].request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     checks[2].return_events = 0;
     OK_OR_RET(chif_net_poll(checks, 3, &ready_count, timeout_ms));
     ALF_CHECK_TRUE(state, ready_count == 1);
@@ -190,12 +189,12 @@ poll_test(AlfTestState* state)
 
     chif_net_check checks[2];
     checks[0].socket = socka;
-    checks[0].request_events = CHIF_NET_CHECK_EVENT_READ |
-                               CHIF_NET_CHECK_EVENT_WRITE;
+    checks[0].request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     checks[0].return_events = 0;
     checks[1].socket = sockb;
-    checks[1].request_events = CHIF_NET_CHECK_EVENT_READ |
-                               CHIF_NET_CHECK_EVENT_WRITE;
+    checks[1].request_events =
+      CHIF_NET_CHECK_EVENT_READ | CHIF_NET_CHECK_EVENT_WRITE;
     checks[1].return_events = 0;
     OK_OR_RET(chif_net_poll(checks, 2, &ready_count, timeout_ms));
 

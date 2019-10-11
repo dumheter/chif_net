@@ -848,7 +848,8 @@ chif_net_poll(chif_net_check* check,
               const int timeout_ms)
 {
 #if defined(CHIF_NET_WINSOCK2)
-  *ready_count_out = WSAPoll((struct pollfd*)check, (ULONG)check_count, timeout_ms);
+  *ready_count_out =
+    WSAPoll((struct pollfd*)check, (ULONG)check_count, timeout_ms);
 #else
   *ready_count_out = poll((struct pollfd*)check, check_count, timeout_ms);
 #endif
@@ -956,6 +957,23 @@ chif_net_create_address(chif_net_address* address_out,
   freeaddrinfo(ai);
 
   return CHIF_NET_RESULT_SUCCESS;
+}
+
+chif_net_result
+chif_net_create_address_i(chif_net_address* address_out,
+                          const char* name,
+                          chif_net_port port,
+                          const chif_net_address_family address_family,
+                          const chif_net_transport_protocol transport_protocol)
+{
+  enum
+  {
+    portstrlen = 6
+  };
+  char portstr[portstrlen];
+  snprintf(portstr, portstrlen, "%u", port);
+  return chif_net_create_address(
+    address_out, name, portstr, address_family, transport_protocol);
 }
 
 chif_net_result
