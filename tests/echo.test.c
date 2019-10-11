@@ -39,20 +39,13 @@ typedef struct
 void
 run_echo_test(AlfTestState* state, const echo_args* args)
 {
-  enum
-  {
-    portstrlen = 6
-  };
-  char portstr[portstrlen];
-  snprintf(portstr, portstrlen, "%u%c", args->port, '\0');
-
   chif_net_socket server;
   OK_OR_RET(chif_net_open_socket(&server, args->proto, args->af));
   OK_OR_RET(chif_net_set_reuse_addr(server, CHIF_NET_TRUE));
 
   chif_net_address server_addr;
-  OK_OR_RET(chif_net_create_address(
-    &server_addr, CHIF_NET_ANY_ADDRESS, portstr, args->af, args->proto));
+  OK_OR_RET(chif_net_create_address_i(
+    &server_addr, CHIF_NET_ANY_ADDRESS, args->port, args->af, args->proto));
 
   OK_OR_RET(chif_net_bind(server, &server_addr));
 
@@ -64,8 +57,8 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   OK_OR_RET(chif_net_open_socket(&client, args->proto, args->af));
 
   chif_net_address client_addr;
-  OK_OR_RET(chif_net_create_address(
-    &client_addr, args->addr, portstr, args->af, args->proto));
+  OK_OR_RET(chif_net_create_address_i(
+    &client_addr, args->addr, args->port, args->af, args->proto));
 
   OK_OR_RET(chif_net_connect(client, &client_addr));
 

@@ -587,7 +587,7 @@ alfJoinThread(AlfThread* thread)
 AlfBool
 alfJoinThreadTry(AlfThread* thread, uint32_t* exitCodeOut)
 {
-  uint32_t exitCode;
+  uint32_t exitCode = 0;
 
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   const DWORD result = WaitForSingleObject(thread->handle, 0);
@@ -631,6 +631,7 @@ alfDetachThread(AlfThread* thread)
   ALF_THREAD_ASSERT(result != FALSE, "Failed to detach thread");
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_detach(thread->handle);
+  (void)result;
   ALF_THREAD_ASSERT(result == 0, "Failed to detach thread");
 #endif
 
@@ -647,6 +648,7 @@ alfKillThread(AlfThread* thread)
   ALF_THREAD_ASSERT(result != 0, "Failed to kill thread");
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_kill(thread->handle, 0);
+  (void)result;
   ALF_THREAD_ASSERT(result == 0, "Failed to kill thread");
 #endif
 }
@@ -679,6 +681,7 @@ alfYieldThread()
   SwitchToThread();
 #elif defined(ALF_THREAD_PTHREAD)
   int result = sched_yield();
+  (void)result;
   ALF_THREAD_ASSERT(result == 0, "Failed to yield thread");
 #endif
 }
@@ -749,9 +752,9 @@ alfSetThreadPriority(AlfThread* thread, AlfThreadPriority priority)
       break;
   }
   int result = pthread_setschedprio(thread->handle, prio);
+  (void)result;
 
-  ALF_THREAD_ASSERT(result != EINVAL,
-                    "Invalid thread priority. This is an internal error");
+  ALF_THREAD_ASSERT(result != EINVAL, "Invalid thread priority. This is an internal error");
   ALF_THREAD_ASSERT(result != ESRCH,
                     "Invalid thread handle. This is an internal error");
   ALF_THREAD_ASSERT(result == 0, "Failed to set thread priority");
@@ -936,6 +939,7 @@ alfAcquireSemaphore(AlfSemaphore* semaphore)
   const int result = sem_wait(&semaphore->handle);
   if (result == -1) {
     int error = errno;
+    (void)error;
     ALF_THREAD_ASSERT(error != EINVAL,
                       "Invalid semaphore handle. This is an internal error");
     ALF_THREAD_ASSERT(result == 0, "Failed to release semaphore");
@@ -971,6 +975,7 @@ alfAcquireSemaphoreTimed(AlfSemaphore* semaphore, uint64_t milliseconds)
 
   if (result == -1) {
     int error = errno;
+    (void)error;
     ALF_THREAD_ASSERT(error != EINVAL,
                       "Invalid semaphore handle. This is an internal error");
     ALF_THREAD_ASSERT(error == EAGAIN || error == ETIMEDOUT,
@@ -1008,6 +1013,7 @@ alfReleaseSemaphore(AlfSemaphore* semaphore)
 #elif defined(ALF_THREAD_TARGET_LINUX)
   // Post semaphore
   const int result = sem_post(&semaphore->handle);
+  (void)result;
   ALF_THREAD_ASSERT(result != EINVAL,
                     "Invalid semaphore handle. This is an internal error");
   ALF_THREAD_ASSERT(result != EOVERFLOW,
@@ -1078,6 +1084,7 @@ alfDeleteMutex(AlfMutex* mutex)
   }
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_mutex_destroy(&mutex->handle);
+  (void)result;
   ALF_THREAD_ASSERT(result != EINVAL,
                     "Invalid mutex handle. This is an internal error");
   ALF_THREAD_ASSERT(result != EBUSY,
@@ -1147,6 +1154,7 @@ alfReleaseMutex(AlfMutex* mutex)
   }
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_mutex_unlock(&mutex->handle);
+  (void)result;
   ALF_THREAD_ASSERT(result != EINVAL,
                     "Invalid mutex handle. This is an internal error");
   ALF_THREAD_ASSERT(result != EPERM,
@@ -1198,6 +1206,7 @@ alfDeleteConditionVariable(AlfConditionVariable* conditionVariable)
 
 #if defined(ALF_THREAD_PTHREAD)
   int result = pthread_cond_destroy(&conditionVariable->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid condition variable handle. This is an internal error");
@@ -1229,6 +1238,7 @@ alfWaitConditionVariable(AlfConditionVariable* conditionVariable,
   ALF_THREAD_ASSERT(result != 0, "Failed to wait on condition variable");
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_cond_wait(&conditionVariable->handle, &mutex->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid condition variable handle. This is an internal error");
@@ -1262,6 +1272,7 @@ alfNotifyConditionVariable(AlfConditionVariable* conditionVariable)
   WakeConditionVariable(&conditionVariable->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_cond_signal(&conditionVariable->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid condition variable handle. This is an internal error");
@@ -1278,6 +1289,7 @@ alfNotifyAllConditionVariables(AlfConditionVariable* conditionVariable)
   WakeAllConditionVariable(&conditionVariable->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_cond_broadcast(&conditionVariable->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid condition variable handle. This is an internal error");
@@ -1320,7 +1332,7 @@ alfDestroyReadWriteLock(AlfReadWriteLock* lock)
 
 #if defined(ALF_THREAD_PTHREAD)
   int32_t result = pthread_rwlock_destroy(&lock->handle);
-
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid read-write lock handle. This is an internal error");
@@ -1342,6 +1354,7 @@ alfAcquireReadLock(AlfReadWriteLock* lock)
   AcquireSRWLockShared(&lock->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int32_t result = pthread_rwlock_rdlock(&lock->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid read-write lock handle. This is an internal error");
@@ -1363,6 +1376,7 @@ alfReleaseReadLock(AlfReadWriteLock* lock)
   ReleaseSRWLockShared(&lock->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int32_t result = pthread_rwlock_unlock(&lock->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid read-write lock handle. This is an internal error");
@@ -1383,6 +1397,7 @@ alfAcquireWriteLock(AlfReadWriteLock* lock)
   AcquireSRWLockExclusive(&lock->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int32_t result = pthread_rwlock_wrlock(&lock->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid read-write lock handle. This is an internal error");
@@ -1404,6 +1419,7 @@ alfReleaseWriteLock(AlfReadWriteLock* lock)
   ReleaseSRWLockExclusive(&lock->handle);
 #elif defined(ALF_THREAD_PTHREAD)
   int32_t result = pthread_rwlock_unlock(&lock->handle);
+  (void)result;
   ALF_THREAD_ASSERT(
     result != EINVAL,
     "Invalid read-write lock handle. This is an internal error");
@@ -1456,6 +1472,7 @@ alfReturnTLS(AlfTLSHandle* handle)
   ALF_THREAD_ASSERT(result != 0, "Failed to return TLS handle");
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_key_delete(handle->handle);
+  (void)result;
   ALF_THREAD_ASSERT(result == 0, "Failed to return TLS handle");
 #endif
 

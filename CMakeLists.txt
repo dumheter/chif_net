@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.10)
 project(chif_net C)
 set(CMAKE_C_STANDARD 99)
 
+option(CHIF_NET_BUILD_EXTRA "build tests and examples" ON)
+
 if (MSVC)
   set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS}")
 else ()
@@ -31,18 +33,14 @@ set(EXTRA_SRC
   tests/echo.test.c
   tests/tcp.test.c
   tests/poll.test.c
-  examples/echo.c
-  examples/echo.h
   )
 endif ()
 
 add_library(${PROJECT_NAME} STATIC ${CHIF_NET_SRC})
 
 if (CHIF_NET_BUILD_EXTRA)
-  add_executable(echo_server examples/echo_server_example.c examples/echo.c)
-  target_compile_definitions(echo_server PRIVATE ECHO_DEBUG_PRINT)
-  add_executable(echo_client examples/echo_client_example.c examples/echo.c)
-  target_compile_definitions(echo_client PRIVATE ECHO_DEBUG_PRINT)
+  add_executable(echo_server examples/echo_server_example.c)
+  add_executable(echo_client examples/echo_client_example.c)
   add_executable(find_ip examples/find_ip.c)
   add_executable(tests tests/test.c ${CHIF_NET_SRC} ${EXTRA_SRC})
 endif ()

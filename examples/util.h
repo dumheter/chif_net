@@ -22,26 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef ECHO_H_
-#define ECHO_H_
-
-#if defined(ECHO_DEBUG_PRINT)
-#include <stdio.h>
-#define DEBUG_PRINTF(...) printf(__VA_ARGS__)
-#else
-#define DEBUG_PRINTF(...)
-#endif
-
-/**
- * @return 0 on success
- */
-int
-run_server(int argc, char** argv);
-
-/**
- * @return 0 on success
- */
-int
-run_client(int argc, char** argv);
-
-#endif // ECHO_H_
+#define OK_OR_CRASH(fn)                                                        \
+  {                                                                            \
+    const chif_net_result res = (fn);                                          \
+    if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
+      printf("failed with error [%s] at [%s:%i]\n",                            \
+             chif_net_result_to_string(res),                                   \
+             __FILE__,                                                         \
+             __LINE__);                                                        \
+      return -1;                                                               \
+    }                                                                          \
+  }
