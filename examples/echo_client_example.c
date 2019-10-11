@@ -103,8 +103,8 @@ run_client(int argc, char** argv)
   }
 
   printf("open socket with protocol [%s], address family [%s]\n",
-               chif_net_transport_protocol_to_string(proto),
-               chif_net_address_family_to_string(af));
+         chif_net_transport_protocol_to_string(proto),
+         chif_net_address_family_to_string(af));
   chif_net_socket sock;
   OK_OR_CRASH(chif_net_open_socket(&sock, proto, af));
 

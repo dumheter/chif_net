@@ -39,4 +39,4 @@
     }                                                                          \
   }
 
-#endif//UTIL_H_
+#endif // UTIL_H_
