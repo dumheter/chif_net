@@ -10,8 +10,6 @@ else ()
   set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -Wall -Wextra -Wpedantic")
 endif ()
 
-include_directories(SYSTEM chif_net)
-
 if (CHIF_NET_BUILD_EXTRA)
   include_directories(SYSTEM tests/thirdparty)
 endif ()
@@ -61,3 +59,7 @@ else ()
     target_link_libraries(tests chif_net pthread)
   endif ()
 endif ()
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+  chif_net
+  )
