@@ -22,6 +22,11 @@
  * SOFTWARE.
  */
 
+#ifndef UTIL_H_
+#define UTIL_H_
+
+#include <stdio.h>
+
 #define OK_OR_CRASH(fn)                                                        \
   {                                                                            \
     const chif_net_result res = (fn);                                          \
@@ -33,3 +38,5 @@
       return -1;                                                               \
     }                                                                          \
   }
+
+#endif//UTIL_H_

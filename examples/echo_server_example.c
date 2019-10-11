@@ -24,7 +24,6 @@
 
 #include "util.h"
 #include <chif_net.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 // ============================================================ //
