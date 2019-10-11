@@ -638,8 +638,10 @@ chif_net_read(const chif_net_socket socket,
     return _chif_net_get_specific_result_type();
   }
   // TODO result == 0 may indicate connection closed if TCP
-  /* else if (result == 0) */
-  /*   return CHIF_NET_RESULT_CONNECTION_CLOSED; */
+  // TODO this is always true?
+  else if (result == 0) {
+    return CHIF_NET_RESULT_CONNECTION_CLOSED;
+  }
 
   if (read_bytes_out) {
     *read_bytes_out = result;
