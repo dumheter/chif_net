@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(chif_net C)
 set(CMAKE_C_STANDARD 99)
 
-option(CHIF_NET_BUILD_EXTRA "build tests and examples" ON)
+option(CHIF_NET_BUILD_EXTRA "build tests and examples" OFF)
 
 if (MSVC)
   set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS}")
