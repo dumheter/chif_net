@@ -637,15 +637,17 @@ chif_net_read(const chif_net_socket socket,
   if (result == -1) {
     return _chif_net_get_specific_result_type();
   }
-  // TODO result == 0 may indicate connection closed if TCP
-  // TODO this is always true?
-  else if (result == 0) {
-    return CHIF_NET_RESULT_CONNECTION_CLOSED;
-  }
 
   if (read_bytes_out) {
     *read_bytes_out = result;
   }
+
+  // Datagram packets of 0 length are permitted, this could be a false positive.
+  if (result == 0) {
+    return CHIF_NET_RESULT_TCP_CONNECTION_CLOSED;
+  }
+
+
 
   return CHIF_NET_RESULT_SUCCESS;
 }
@@ -1375,6 +1377,8 @@ chif_net_result_to_string(const chif_net_result result)
       return "BUFFER_BAD";
     case CHIF_NET_RESULT_INVALID_SOCKTYPE:
       return "INVALID_SOCKTYPE";
+    case CHIF_NET_RESULT_TCP_CONNECTION_CLOSED:
+      return "CHIF_NET_RESULT_TCP_CONNECTION_CLOSED";
   }
 
   // should never happen

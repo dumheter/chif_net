@@ -157,7 +157,8 @@ typedef int chif_net_socket;
     CHIF_NET_RESULT_NAME_SERVER_FAIL,
     CHIF_NET_RESLUT_NO_NAME,
     CHIF_NET_RESULT_BUFFER_BAD,
-    CHIF_NET_RESULT_INVALID_SOCKTYPE
+    CHIF_NET_RESULT_INVALID_SOCKTYPE,
+    CHIF_NET_RESULT_TCP_CONNECTION_CLOSED
   } chif_net_result;
 
   typedef enum
@@ -344,6 +345,13 @@ typedef int chif_net_socket;
    *
    * Note, read_bytes of value 0 may indicate connection closed if using TCP.
    * But can also mean that a packet of 0 length was received.
+   *
+   * Note, data length of 0 is permitted for UDP (datagram) type packets.
+   * But it will return CHIF_NET_RESULT_TCP_CONNECTION_CLOSED since it does
+   * not know if socket type is TCP or UDP. So, if read_bytes_out is 0,
+   * CHIF_NET_RESULT_TCP_CONNECTION_CLOSED is return, and you are using a UDP
+   * socket, it may be a false negative. TODO is it always a false negative
+   * since UDP does not have connections?
    *
    * @param socket
    * @param buf_out
