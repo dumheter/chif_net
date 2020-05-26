@@ -197,9 +197,6 @@ _chif_net_get_specific_result_type()
     case ENOTSOCK:
       return CHIF_NET_RESULT_NOT_A_SOCKET;
 
-    case EBADF:
-      return CHIF_NET_RESULT_INVALID_FILE_DESCRIPTOR;
-
     case EALREADY:
       return CHIF_NET_RESULT_WOULD_BLOCK;
 
@@ -261,8 +258,11 @@ _chif_net_get_specific_result_type()
       return CHIF_NET_RESULT_NO_MEMORY;
 
     case EPROTONOSUPPORT:
-    case EAI_SERVICE:
-      return CHIF_NET_RESULT_INVALID_TRANSPORT_PROTOCOL;
+    case EAI_SERVICE /* EBADF */:
+      // NOTE, this overlaps with EBADF which tells us we have a
+      // bad file descriptor.
+      //return CHIF_NET_RESULT_INVALID_TRANSPORT_PROTOCOL;
+      return CHIF_NET_RESULT_INVALID_FILE_DESCRIPTOR;
 
     case EAI_SOCKTYPE:
       return CHIF_NET_RESULT_INVALID_SOCKTYPE;
