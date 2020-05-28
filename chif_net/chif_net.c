@@ -916,8 +916,8 @@ chif_net_result
 chif_net_create_address(chif_net_address* address_out,
                         const char* name,
                         const char* service,
-                        const chif_net_address_family address_family,
-                        const chif_net_transport_protocol transport_protocol)
+                        const chif_net_transport_protocol transport_protocol,
+                        const chif_net_address_family address_family)
 {
   struct addrinfo hints, *ai;
   memset(&hints, 0, sizeof(hints));
@@ -967,8 +967,8 @@ chif_net_result
 chif_net_create_address_i(chif_net_address* address_out,
                           const char* name,
                           chif_net_port port,
-                          const chif_net_address_family address_family,
-                          const chif_net_transport_protocol transport_protocol)
+                          const chif_net_transport_protocol transport_protocol,
+                          const chif_net_address_family address_family)
 {
   enum
   {
@@ -977,7 +977,7 @@ chif_net_create_address_i(chif_net_address* address_out,
   char portstr[portstrlen];
   snprintf(portstr, portstrlen, "%u", port);
   return chif_net_create_address(
-    address_out, name, portstr, address_family, transport_protocol);
+      address_out, name, portstr, transport_protocol, address_family);
 }
 
 chif_net_result

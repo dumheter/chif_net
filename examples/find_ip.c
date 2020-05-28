@@ -28,7 +28,7 @@ find_server_bind_address()
   printf("bind socket\n");
   chif_net_address bind_addr;
   ok_or_die(chif_net_create_address(
-    &bind_addr, "localhost", CHIF_NET_ANY_PORT, af, proto));
+      &bind_addr, "localhost", CHIF_NET_ANY_PORT, proto, af));
   ok_or_die(chif_net_bind(sock, &bind_addr));
 
   printf("listen for connection\n");
@@ -74,7 +74,7 @@ find_LAN_address()
   const char* dns_port = "53";
 
   ok_or_die(chif_net_create_address(
-    &google_dns_addr, GOOGLE_DNS_IP, dns_port, af, proto));
+    &google_dns_addr, GOOGLE_DNS_IP, dns_port, proto, af));
   ok_or_die(chif_net_connect(sock, &google_dns_addr));
 
   {
@@ -113,7 +113,7 @@ find_hostname_address(const char* site)
   {
     printf("looking up %s 's ip\n", site);
     chif_net_address addr;
-    ok_or_die(chif_net_create_address(&addr, site, "http", af, proto));
+    ok_or_die(chif_net_create_address(&addr, site, "http", proto, af));
     ok_or_die(chif_net_connect(sock, &addr));
   }
 

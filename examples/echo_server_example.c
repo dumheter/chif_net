@@ -101,7 +101,7 @@ run_server(int argc, char** argv)
   printf("bind socket on port [%u]\n", port);
   chif_net_address bindaddr;
   OK_OR_CRASH(chif_net_create_address_i(
-    &bindaddr, CHIF_NET_ANY_ADDRESS, port, af, proto));
+    &bindaddr, CHIF_NET_ANY_ADDRESS, port, proto, af));
   OK_OR_CRASH(chif_net_bind(sock, &bindaddr));
 
   chif_net_port bound_port;

@@ -501,16 +501,16 @@ typedef int chif_net_socket;
    * @param address_out Output address
    * @param name Example, "127.0.0.1" or "www.duckduckgo.com" or "localhost".
    * @param service Example, "http" or "80". May use CHIF_NET_ANY_PORT
-   * @param address_family
    * @param transport_protocol
+   * @param address_family
    * @return
    */
   chif_net_result chif_net_create_address(
     chif_net_address* address_out,
     const char* name,
     const char* service,
-    chif_net_address_family address_family,
-    chif_net_transport_protocol transport_protocol);
+    chif_net_transport_protocol transport_protocol,
+    chif_net_address_family address_family);
 
   /**
    * Fill in address from information. If needed, will automagically find the
@@ -523,16 +523,16 @@ typedef int chif_net_socket;
    * @param address_out Output address
    * @param port A port number on the range [0, 65535].
    * @param service Example, "http" or "80". May use CHIF_NET_ANY_PORT
-   * @param address_family
    * @param transport_protocol
+   * @param address_family
    * @return
    */
   chif_net_result chif_net_create_address_i(
     chif_net_address* address_out,
     const char* name,
     chif_net_port port,
-    chif_net_address_family address_family,
-    chif_net_transport_protocol transport_protocol);
+    chif_net_transport_protocol transport_protocol,
+    chif_net_address_family address_family);
 
   /**
    * Get the address of a socket.

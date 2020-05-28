@@ -110,7 +110,7 @@ run_client(int argc, char** argv)
 
   printf("create address [%s:%u]\n", ip, port);
   chif_net_address addr;
-  OK_OR_CRASH(chif_net_create_address_i(&addr, ip, port, af, proto));
+  OK_OR_CRASH(chif_net_create_address_i(&addr, ip, port, proto, af));
 
   printf("connecting..\n");
   OK_OR_CRASH(chif_net_connect(sock, &addr));
