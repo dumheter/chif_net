@@ -602,7 +602,7 @@ chif_net_accept(const chif_net_socket listening_socket,
        SUPP, and ENETUNREACH.
    */
 
-  if (*client_socket_out == -1) {
+  if (*client_socket_out == CHIF_NET_INVALID_SOCKET) {
     return _chif_net_get_specific_result_type();
   }
 
