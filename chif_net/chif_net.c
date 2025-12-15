@@ -114,7 +114,7 @@ CHIF_NET_STATIC_ASSERT(sizeof(chif_net_check) == sizeof(struct pollfd),
 // ============================================================ //
 
 static chif_net_result
-_chif_net_get_specific_result_type()
+_chif_net_get_specific_result_type(void)
 {
 #if defined(CHIF_NET_WINSOCK2)
   const DWORD error = GetLastError();
@@ -423,7 +423,7 @@ _chif_net_address_size_from_address_family(
 // ====================================================================== //
 
 chif_net_result
-chif_net_startup()
+chif_net_startup(void)
 {
 #if defined(CHIF_NET_WINSOCK2)
   WSADATA winsock_data;
@@ -436,7 +436,7 @@ chif_net_startup()
 }
 
 chif_net_result
-chif_net_shutdown()
+chif_net_shutdown(void)
 {
 #if defined(CHIF_NET_WINSOCK2)
   const int32_t result = WSACleanup();

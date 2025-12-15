@@ -258,7 +258,7 @@ typedef int chif_net_socket;
    *
    * @return Result of the operation
    */
-  chif_net_result chif_net_startup();
+  chif_net_result chif_net_startup(void);
 
   /**
    * Called to shut down the chif network library.
@@ -266,7 +266,7 @@ typedef int chif_net_socket;
    *
    * @return Result of the operation.
    */
-  chif_net_result chif_net_shutdown();
+  chif_net_result chif_net_shutdown(void);
   /**
    * Open a socket that uses the specified transport protocol for data
    * transmission.
