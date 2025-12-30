@@ -178,6 +178,12 @@ _chif_net_get_specific_result_type(void)
     case WSAECONNREFUSED:
       return CHIF_NET_RESULT_CONNECTION_REFUSED;
 
+    case WSAECONNABORTED:
+      return CHIF_NET_RESULT_CONNECTION_ABORTED;
+
+    case WSAECONNRESET:
+      return CHIF_NET_RESULT_SOCKET_RESET;
+
     case EAI_FAIL:
     case EAI_AGAIN:
       return CHIF_NET_RESULT_NAME_SERVER_FAIL;
