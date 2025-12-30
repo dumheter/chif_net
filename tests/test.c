@@ -29,7 +29,7 @@
 #include <chif_net.h>
 
 int
-main()
+main(void)
 {
   chif_net_startup();
   alfThreadStartup();

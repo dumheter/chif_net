@@ -40,7 +40,7 @@ duckduckgo(AlfTestState* state)
   chif_net_address addr;
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_create_address(&addr, site, "http", af, proto));
+                   chif_net_create_address(&addr, site, "http", proto, af));
   ALF_CHECK_TRUE(state,
                  CHIF_NET_RESULT_SUCCESS == chif_net_connect(sock, &addr));
 
@@ -90,6 +90,6 @@ bad_site(AlfTestState* state)
   chif_net_address addr;
   ALF_CHECK_FALSE_R(state,
                     CHIF_NET_RESULT_SUCCESS ==
-                      chif_net_create_address(&addr, site, "http", af, proto),
+                      chif_net_create_address(&addr, site, "http", proto, af),
                     "attempting to lookup address no site");
 }

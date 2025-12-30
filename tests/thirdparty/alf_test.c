@@ -213,7 +213,7 @@ typedef struct tag_AlfTestSuite
 /** Setup console for platforms that does not support escape sequences out of
  * the box **/
 static void
-_alfSetupConsoleMode()
+_alfSetupConsoleMode(void)
 {
 #if defined(_WIN32)
   static INT_TYPE isSetup = 0;
@@ -221,12 +221,11 @@ _alfSetupConsoleMode()
     // Enable virtual terminal processing for Color support
     DWORD mode;
     const HANDLE outputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (outputHandle) {
+    if (outputHandle && outputHandle != INVALID_HANDLE_VALUE) {
       BOOL success = GetConsoleMode(outputHandle, &mode);
-      assert(success && "Failet to get Windows console mode");
-      success =
+      if (success) {
         SetConsoleMode(outputHandle, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-      assert(success && "Failed to set Windows console mode");
+      }
     }
     isSetup = 1;
   }
@@ -260,7 +259,7 @@ _alfStringCopy(char* string)
 
 /** Returns a relative time from high-performance timer **/
 static TIME_TYPE
-_alfHighPerformanceTimer()
+_alfHighPerformanceTimer(void)
 {
 #if defined(_WIN32)
   // Only query the performance counter frequency once
@@ -302,20 +301,24 @@ _alfHighPerformanceTimer()
 /** Default suite setup function that does nothing **/
 static void
 _alfDefaultSuiteSetup(AlfTestSuite* suite)
-{(void)suite;}
+{
+  (void)suite;
+}
 
 // -------------------------------------------------------------------------- //
 
 /** Default suite teardown function that does nothing **/
 static void
 _alfDefaultSuiteTeardown(AlfTestSuite* suite)
-{(void)suite;}
+{
+  (void)suite;
+}
 
 // -------------------------------------------------------------------------- //
 
 /** Print about-text **/
 static void
-_alfPrintAbout()
+_alfPrintAbout(void)
 {
 #if defined(ALF_TEST_PRINT_ABOUT)
   printf("\n\t" ALF_TEST_CC_LOGO "AlfTest" ALF_TEST_CC_RESET

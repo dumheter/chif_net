@@ -164,8 +164,8 @@ poll_test(AlfTestState* state)
     OK_OR_RET(chif_net_create_address(&anyaddr,
                                       "localhost",
                                       CHIF_NET_ANY_PORT,
-                                      CHIF_NET_ADDRESS_FAMILY_IPV4,
-                                      CHIF_NET_TRANSPORT_PROTOCOL_TCP));
+                                      CHIF_NET_TRANSPORT_PROTOCOL_UDP,
+                                      CHIF_NET_ADDRESS_FAMILY_IPV4));
 
     OK_OR_RET(chif_net_bind(socka, &anyaddr));
     OK_OR_RET(chif_net_bind(sockb, &anyaddr));

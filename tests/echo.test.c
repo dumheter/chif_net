@@ -45,7 +45,7 @@ run_echo_test(AlfTestState* state, const echo_args* args)
 
   chif_net_address server_addr;
   OK_OR_RET(chif_net_create_address_i(
-    &server_addr, CHIF_NET_ANY_ADDRESS, args->port, args->af, args->proto));
+    &server_addr, CHIF_NET_ANY_ADDRESS, args->port, args->proto, args->af));
 
   OK_OR_RET(chif_net_bind(server, &server_addr));
 
@@ -58,7 +58,7 @@ run_echo_test(AlfTestState* state, const echo_args* args)
 
   chif_net_address client_addr;
   OK_OR_RET(chif_net_create_address_i(
-    &client_addr, args->addr, args->port, args->af, args->proto));
+    &client_addr, args->addr, args->port, args->proto, args->af));
 
   OK_OR_RET(chif_net_connect(client, &client_addr));
 

@@ -40,7 +40,7 @@ tcp_test(AlfTestState* state)
   const char* portstr = "1336\0";
   chif_net_address addr;
   OK_OR_RET(
-    chif_net_create_address(&addr, CHIF_NET_ANY_ADDRESS, portstr, af, proto));
+    chif_net_create_address(&addr, CHIF_NET_ANY_ADDRESS, portstr, proto, af));
 
   OK_OR_RET(chif_net_bind(sock, (chif_net_address*)&addr));
 

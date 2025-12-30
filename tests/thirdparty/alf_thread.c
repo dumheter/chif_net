@@ -40,10 +40,10 @@
 #define ALF_THREAD_TARGET_LINUX
 #define ALF_THREAD_PTHREAD
 #define _GNU_SOURCE
-#include <semaphore.h>
-#include <zconf.h>
 #include <errno.h>
+#include <semaphore.h>
 #include <unistd.h>
+#include <zconf.h>
 #elif defined(__APPLE__)
 #define ALF_THREAD_TARGET_APPLE
 #if __has_feature(objc_arc)
@@ -59,8 +59,8 @@ UNSUPPORTED_PLATFORM
 
 // Pthread header
 #if defined(ALF_THREAD_PTHREAD)
-#include <signal.h>
 #include <pthread.h>
+#include <signal.h>
 #endif
 
 // ========================================================================== //
@@ -110,7 +110,7 @@ typedef struct tag_AlfMutex
     SRWLOCK srwlock;
     /** Windows critical section for recursive mutexes **/
     CRITICAL_SECTION criticalSection;
-  };
+  } data;
 #elif defined(ALF_THREAD_PTHREAD)
   /** Pthread mutex handle **/
   pthread_mutex_t handle;
@@ -399,7 +399,7 @@ alfThreadStartup(void)
 // -------------------------------------------------------------------------- //
 
 void
-alfThreadShutdown()
+alfThreadShutdown(void)
 {
   // Free all external node handles
   AlfNode* current = gData.externalThreads;
@@ -514,7 +514,7 @@ alfCreateThreadNamed(PFN_AlfThreadFunction function,
 // -------------------------------------------------------------------------- //
 
 AlfThread*
-alfThisThread()
+alfThisThread(void)
 {
   // Get thread
   AlfThread* thread = (AlfThread*)alfLoadTLS(gData.handleTLS);
@@ -675,7 +675,7 @@ alfExitThread(uint32_t exitCode)
 // -------------------------------------------------------------------------- //
 
 void
-alfYieldThread()
+alfYieldThread(void)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   SwitchToThread();
@@ -754,7 +754,8 @@ alfSetThreadPriority(AlfThread* thread, AlfThreadPriority priority)
   int result = pthread_setschedprio(thread->handle, prio);
   (void)result;
 
-  ALF_THREAD_ASSERT(result != EINVAL, "Invalid thread priority. This is an internal error");
+  ALF_THREAD_ASSERT(result != EINVAL,
+                    "Invalid thread priority. This is an internal error");
   ALF_THREAD_ASSERT(result != ESRCH,
                     "Invalid thread handle. This is an internal error");
   ALF_THREAD_ASSERT(result == 0, "Failed to set thread priority");
@@ -787,7 +788,7 @@ alfGetThreadID(AlfThread* thread)
 // -------------------------------------------------------------------------- //
 
 const char*
-alfGetThreadName()
+alfGetThreadName(void)
 {
   // Get thread handle
   AlfThread* thread = alfThisThread();
@@ -1034,9 +1035,9 @@ alfCreateMutex(AlfBool recursive)
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   AlfMutex handle;
   if (recursive) {
-    InitializeCriticalSection(&handle.criticalSection);
+    InitializeCriticalSection(&handle.data.criticalSection);
   } else {
-    InitializeSRWLock(&handle.srwlock);
+    InitializeSRWLock(&handle.data.srwlock);
   }
 #elif defined(ALF_THREAD_PTHREAD)
   AlfMutex handle;
@@ -1080,7 +1081,7 @@ alfDeleteMutex(AlfMutex* mutex)
 
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   if (mutex->recursive) {
-    DeleteCriticalSection(&mutex->criticalSection);
+    DeleteCriticalSection(&mutex->data.criticalSection);
   }
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_mutex_destroy(&mutex->handle);
@@ -1106,9 +1107,9 @@ alfAcquireMutex(AlfMutex* mutex)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   if (mutex->recursive) {
-    EnterCriticalSection(&mutex->criticalSection);
+    EnterCriticalSection(&mutex->data.criticalSection);
   } else {
-    AcquireSRWLockExclusive(&mutex->srwlock);
+    AcquireSRWLockExclusive(&mutex->data.srwlock);
   }
 #elif defined(ALF_THREAD_PTHREAD)
   int result;
@@ -1132,9 +1133,9 @@ alfAcquireMutexTry(AlfMutex* mutex)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   if (mutex->recursive) {
-    return TryEnterCriticalSection(&mutex->criticalSection) != 0;
+    return TryEnterCriticalSection(&mutex->data.criticalSection) != 0;
   }
-  return TryAcquireSRWLockExclusive(&mutex->srwlock) != 0;
+  return TryAcquireSRWLockExclusive(&mutex->data.srwlock) != 0;
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_mutex_trylock(&mutex->handle);
   return result == 0;
@@ -1148,9 +1149,9 @@ alfReleaseMutex(AlfMutex* mutex)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   if (mutex->recursive) {
-    LeaveCriticalSection(&mutex->criticalSection);
+    LeaveCriticalSection(&mutex->data.criticalSection);
   } else {
-    ReleaseSRWLockExclusive(&mutex->srwlock);
+    ReleaseSRWLockExclusive(&mutex->data.srwlock);
   }
 #elif defined(ALF_THREAD_PTHREAD)
   int result = pthread_mutex_unlock(&mutex->handle);
@@ -1176,7 +1177,7 @@ alfIsMutexRecursive(AlfMutex* mutex)
 // ========================================================================== //
 
 AlfConditionVariable*
-alfCreateConditionVariable()
+alfCreateConditionVariable(void)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   CONDITION_VARIABLE handle;
@@ -1230,10 +1231,10 @@ alfWaitConditionVariable(AlfConditionVariable* conditionVariable,
   BOOL result;
   if (mutex->recursive) {
     result = SleepConditionVariableCS(
-      &conditionVariable->handle, &mutex->criticalSection, INFINITE);
+      &conditionVariable->handle, &mutex->data.criticalSection, INFINITE);
   } else {
     result = SleepConditionVariableSRW(
-      &conditionVariable->handle, &mutex->srwlock, INFINITE, 0);
+      &conditionVariable->handle, &mutex->data.srwlock, INFINITE, 0);
   }
   ALF_THREAD_ASSERT(result != 0, "Failed to wait on condition variable");
 #elif defined(ALF_THREAD_PTHREAD)
@@ -1302,7 +1303,7 @@ alfNotifyAllConditionVariables(AlfConditionVariable* conditionVariable)
 // ========================================================================== //
 
 AlfReadWriteLock*
-alfCreateReadWriteLock()
+alfCreateReadWriteLock(void)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   SRWLOCK handle;
@@ -1436,7 +1437,7 @@ alfReleaseWriteLock(AlfReadWriteLock* lock)
 // ========================================================================== //
 
 AlfTLSHandle*
-alfGetTLS()
+alfGetTLS(void)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   // Allocate tls
@@ -1776,7 +1777,7 @@ alfAtomicSubU32(uint32_t* integer, uint32_t value)
 // ========================================================================== //
 
 uint32_t
-alfGetHardwareThreadCount()
+alfGetHardwareThreadCount(void)
 {
 #if defined(ALF_THREAD_TARGET_WINDOWS)
   SYSTEM_INFO info;
