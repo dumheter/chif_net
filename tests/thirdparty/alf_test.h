@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2018-2019 Filip Björklund
+// Copyright (c) 2018-2019 Filip BjÃ¶rklund
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -197,7 +197,7 @@ extern "C"
    **
    *
    * END:
-   * For more information visit the github repository: TODO(Filip Björklund)
+   * For more information visit the github repository: TODO(Filip BjÃ¶rklund)
    */
 
   // ====================================================================== //
@@ -326,7 +326,7 @@ extern "C"
   // //
 
   /** \struct AlfTestSuite
-   * \author Filip Björklund
+   * \author Filip BjÃ¶rklund
    * \date 29 september 2018 - 13:35
    * \brief Test suite.
    * \details
@@ -338,7 +338,7 @@ extern "C"
   // //
 
   /** \struct AlfTestState
-   * \author Filip Björklund
+   * \author Filip BjÃ¶rklund
    * \date 29 september 2018 - 13:35
    * \brief Test state.
    * \details
@@ -351,7 +351,7 @@ extern "C"
   // //
 
   /** \struct AlfTest
-   * \author Filip Björklund
+   * \author Filip BjÃ¶rklund
    * \date 29 september 2018 - 13:44
    * \brief Test.
    * \details

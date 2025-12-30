@@ -40,7 +40,14 @@ if (CHIF_NET_BUILD_EXTRA)
   add_executable(echo_server examples/echo_server_example.c)
   add_executable(echo_client examples/echo_client_example.c)
   add_executable(find_ip examples/find_ip.c)
+
   add_executable(tests tests/test.c ${EXTRA_SRC})
+  if (MSVC)
+    target_compile_options(tests PRIVATE /utf-8 /Zc:preprocessor- /W4 /WX /wd4324 /wd4201 -DSERIALIZE_SERIALIZE_CHECKS=0 -DSERIALIZE_ENABLE_TESTS=0)
+  else ()
+    target_compile_options(tests PRIVATE -Wall -Wextra -pedantic -Werror -Wundef -DSERIALIZE_SERIALIZE_CHECKS=0 -DSERIALIZE_ENABLE_TESTS=0 -Wno-gnu-zero-variadic-macro-arguments)
+  endif ()
+
 endif ()
 
 if (WIN32)
