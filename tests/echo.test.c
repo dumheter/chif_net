@@ -69,7 +69,10 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
     int can_read;
     OK_OR_RET(chif_net_can_read(server, &can_read, 50));
-    OK_OR_RET(can_read == CHIF_NET_TRUE);
+    ALF_CHECK_TRUE(state, can_read == CHIF_NET_TRUE);
+    if (can_read != CHIF_NET_TRUE) {
+      return;
+    }
 
     chif_net_address unused;
     if (args->af == CHIF_NET_ADDRESS_FAMILY_IPV4) {
@@ -87,7 +90,10 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   char buf[buflen] = "this is a message";
   int bytes;
   OK_OR_RET(chif_net_write(client, (uint8_t*)buf, buflen, &bytes));
-  OK_OR_RET(buflen == bytes)
+  ALF_CHECK_TRUE(state, buflen == bytes);
+  if (buflen != bytes) {
+    return;
+  }
 
   enum
   {
@@ -99,7 +105,10 @@ run_echo_test(AlfTestState* state, const echo_args* args)
   chif_net_socket* cli =
     args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP ? &server_client : &server;
   OK_OR_RET(chif_net_can_read(*cli, &can_read, 50));
-  OK_OR_RET(can_read == CHIF_NET_TRUE);
+  ALF_CHECK_TRUE(state, can_read == CHIF_NET_TRUE);
+  if (can_read != CHIF_NET_TRUE) {
+    return;
+  }
   chif_net_address from_addr;
   CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(from_addr);
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
@@ -113,8 +122,14 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(
       chif_net_readfrom(*cli, (uint8_t*)inbuf, inbuflen, &inbytes, &from_addr));
   }
-  OK_OR_RET(inbytes == bytes);
-  OK_OR_RET(memcmp(buf, inbuf, inbytes) == 0);
+  ALF_CHECK_TRUE(state, inbytes == bytes);
+  if (inbytes != bytes) {
+    return;
+  }
+  ALF_CHECK_TRUE(state, memcmp(buf, inbuf, inbytes) == 0);
+  if (memcmp(buf, inbuf, inbytes) != 0) {
+    return;
+  }
 
   int bytes2;
   if (args->proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
@@ -123,14 +138,26 @@ run_echo_test(AlfTestState* state, const echo_args* args)
     OK_OR_RET(
       chif_net_writeto(*cli, (uint8_t*)inbuf, inbytes, &bytes2, &from_addr));
   }
-  OK_OR_RET(bytes2 == inbytes);
+  ALF_CHECK_TRUE(state, bytes2 == inbytes);
+  if (bytes2 != inbytes) {
+    return;
+  }
 
   int inbytes2;
   OK_OR_RET(chif_net_can_read(client, &can_read, 50));
-  OK_OR_RET(can_read == CHIF_NET_TRUE);
+  ALF_CHECK_TRUE(state, can_read == CHIF_NET_TRUE);
+  if (can_read != CHIF_NET_TRUE) {
+    return;
+  }
   OK_OR_RET(chif_net_read(client, (uint8_t*)buf, buflen, &inbytes2));
-  OK_OR_RET(inbytes2 == bytes2);
-  OK_OR_RET(memcmp(buf, inbuf, inbytes2) == 0);
+  ALF_CHECK_TRUE(state, inbytes2 == bytes2);
+  if (inbytes2 != bytes2) {
+    return;
+  }
+  ALF_CHECK_TRUE(state, memcmp(buf, inbuf, inbytes2) == 0);
+  if (memcmp(buf, inbuf, inbytes2) != 0) {
+    return;
+  }
 
   OK_OR_RET(chif_net_close_socket(&server));
   OK_OR_RET(chif_net_close_socket(&client));

@@ -30,7 +30,7 @@
 #define OK_OR_CRASH(fn)                                                        \
   {                                                                            \
     const chif_net_result res = (fn);                                          \
-    if (res != CHIF_NET_RESULT_SUCCESS) {                                      \
+    if (res) {                                                                 \
       printf("failed with error [%s] at [%s:%i]\n",                            \
              chif_net_result_to_string(res),                                   \
              __FILE__,                                                         \

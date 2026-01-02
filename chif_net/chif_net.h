@@ -73,7 +73,7 @@ extern "C"
 #if defined(CHIF_NET_WINSOCK2)
 #define CHIF_NET_INVALID_SOCKET ((chif_net_socket)(~0))
 #elif defined(CHIF_NET_BERKLEY_SOCKET)
-#define CHIF_NET_INVALID_SOCKET ((chif_net_socket)-1)
+#define CHIF_NET_INVALID_SOCKET ((chif_net_socket) - 1)
 #endif
 
 #define CHIF_NET_SUPPRESS_UNUSED_VAR_WARNING(var) (void)var
@@ -119,8 +119,8 @@ typedef int chif_net_socket;
   // TODO convert them back to errno in order to use strerrno()?
   typedef enum
   {
-    CHIF_NET_RESULT_UNKNOWN = 0,
-    CHIF_NET_RESULT_SUCCESS,
+    CHIF_NET_RESULT_SUCCESS = 0,
+    CHIF_NET_RESULT_UNKNOWN,
     CHIF_NET_RESULT_LIBRARY_NOT_INITIALIZED,
     CHIF_NET_RESULT_BLOCKING,
     CHIF_NET_RESULT_MAX_SOCKETS_REACHED,

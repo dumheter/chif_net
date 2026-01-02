@@ -267,7 +267,7 @@ _chif_net_get_specific_result_type(void)
     case EAI_SERVICE /* EBADF */:
       // NOTE, this overlaps with EBADF which tells us we have a
       // bad file descriptor.
-      //return CHIF_NET_RESULT_INVALID_TRANSPORT_PROTOCOL;
+      // return CHIF_NET_RESULT_INVALID_TRANSPORT_PROTOCOL;
       return CHIF_NET_RESULT_INVALID_FILE_DESCRIPTOR;
 
     case EAI_SOCKTYPE:
@@ -388,7 +388,7 @@ _chif_net_poll(const chif_net_socket socket,
   chif_net_result res = chif_net_poll(&check, check_count, res_out, timeout_ms);
 
   // TODO
-  if (res != CHIF_NET_RESULT_SUCCESS) {
+  if (res) {
     return res;
   }
   if (*res_out > 0) {
@@ -652,8 +652,6 @@ chif_net_read(const chif_net_socket socket,
   if (result == 0) {
     return CHIF_NET_RESULT_TCP_CONNECTION_CLOSED;
   }
-
-
 
   return CHIF_NET_RESULT_SUCCESS;
 }
@@ -983,7 +981,7 @@ chif_net_create_address_i(chif_net_address* address_out,
   char portstr[portstrlen];
   snprintf(portstr, portstrlen, "%u", port);
   return chif_net_create_address(
-      address_out, name, portstr, transport_protocol, address_family);
+    address_out, name, portstr, transport_protocol, address_family);
 }
 
 chif_net_result
@@ -1056,7 +1054,7 @@ chif_net_ip_from_socket(const chif_net_socket socket,
 
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);
-  if (result != CHIF_NET_RESULT_SUCCESS) {
+  if (result) {
     return result;
   }
 
@@ -1097,7 +1095,7 @@ chif_net_port_from_socket(const chif_net_socket socket, chif_net_port* port_out)
   const chif_net_result result =
     chif_net_address_from_socket(socket, (chif_net_address*)&address);
 
-  if (result != CHIF_NET_RESULT_SUCCESS) {
+  if (result) {
     return result;
   }
 

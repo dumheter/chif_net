@@ -42,7 +42,7 @@ poll_test(AlfTestState* state)
 
     const chif_net_result res =
       chif_net_poll(&check, 1, &ready_count, timeout_ms);
-    ALF_CHECK_TRUE(state, ready_count == 0 || res != CHIF_NET_RESULT_SUCCESS);
+    ALF_CHECK_TRUE(state, ready_count == 0 || res);
   }
 
   { // polling a opened, then closed socket
@@ -58,7 +58,7 @@ poll_test(AlfTestState* state)
 
     const chif_net_result res =
       chif_net_poll(&check, 1, &ready_count, timeout_ms);
-    ALF_CHECK_TRUE(state, ready_count == 0 || res != CHIF_NET_RESULT_SUCCESS);
+    ALF_CHECK_TRUE(state, ready_count == 0 || res);
   }
 
   // ============================================================ //

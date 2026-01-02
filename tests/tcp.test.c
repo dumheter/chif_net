@@ -45,18 +45,15 @@ tcp_test(AlfTestState* state)
   OK_OR_RET(chif_net_bind(sock, (chif_net_address*)&addr));
 
   chif_net_port bound_port;
-  OK_OR_RET(CHIF_NET_RESULT_SUCCESS ==
-            chif_net_port_from_socket(sock, &bound_port));
+  OK_OR_RET(chif_net_port_from_socket(sock, &bound_port));
   char bound_ip[CHIF_NET_IPVX_STRING_LENGTH];
   OK_OR_RET(
-    CHIF_NET_RESULT_SUCCESS ==
     chif_net_ip_from_socket(sock, bound_ip, CHIF_NET_IPVX_STRING_LENGTH));
   ALF_CHECK_TRUE(state, bound_port == 1336);
   const char* correct_ip = "0.0.0.0";
   ALF_CHECK_TRUE(state, 0 == memcmp(bound_ip, correct_ip, 7));
 
-  OK_OR_RET(CHIF_NET_RESULT_SUCCESS ==
-            chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
+  OK_OR_RET(chif_net_listen(sock, CHIF_NET_DEFAULT_BACKLOG));
 
   /* printf("waiting to accept client\n"); */
   /* chif_net_socket clisock; */

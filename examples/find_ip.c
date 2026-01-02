@@ -5,7 +5,7 @@
 void
 ok_or_die(chif_net_result res)
 {
-  if (res != CHIF_NET_RESULT_SUCCESS) {
+  if (res) {
     printf("failed with error %s.\n", chif_net_result_to_string(res));
 #if defined(_WIN32) || defined(_WIN64)
     printf("\nenter any key to exit\n> ");
@@ -28,7 +28,7 @@ find_server_bind_address()
   printf("bind socket\n");
   chif_net_address bind_addr;
   ok_or_die(chif_net_create_address(
-      &bind_addr, "localhost", CHIF_NET_ANY_PORT, proto, af));
+    &bind_addr, "localhost", CHIF_NET_ANY_PORT, proto, af));
   ok_or_die(chif_net_bind(sock, &bind_addr));
 
   printf("listen for connection\n");

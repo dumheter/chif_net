@@ -33,16 +33,13 @@ duckduckgo(AlfTestState* state)
   chif_net_socket sock;
   const chif_net_address_family af = CHIF_NET_ADDRESS_FAMILY_IPV4;
   const chif_net_transport_protocol proto = CHIF_NET_TRANSPORT_PROTOCOL_TCP;
-  ALF_CHECK_TRUE(
-    state, CHIF_NET_RESULT_SUCCESS == chif_net_open_socket(&sock, proto, af));
+  ALF_CHECK_TRUE(state, !chif_net_open_socket(&sock, proto, af));
 
   const char* site = "www.duckduckgo.com";
   chif_net_address addr;
   ALF_CHECK_TRUE(state,
-                 CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_create_address(&addr, site, "http", proto, af));
-  ALF_CHECK_TRUE(state,
-                 CHIF_NET_RESULT_SUCCESS == chif_net_connect(sock, &addr));
+                 !chif_net_create_address(&addr, site, "http", proto, af));
+  ALF_CHECK_TRUE(state, !chif_net_connect(sock, &addr));
 
   // some invalid request to get a 400 response.
   const char* request = "GET /robot.txt HTTP/1.1\
@@ -56,9 +53,7 @@ duckduckgo(AlfTestState* state)
   while (written < (int)request_len) {
     int bytes;
     ALF_CHECK_TRUE(
-      state,
-      CHIF_NET_RESULT_SUCCESS ==
-        chif_net_write(sock, (uint8_t*)request, request_len, &bytes));
+      state, !chif_net_write(sock, (uint8_t*)request, request_len, &bytes));
     written += bytes;
     ++iters;
     ALF_CHECK_TRUE_R(state,
@@ -72,9 +67,7 @@ duckduckgo(AlfTestState* state)
   }; // 50 MB
   uint8_t* buf = malloc(buflen);
   int readbytes;
-  ALF_CHECK_TRUE(state,
-                 CHIF_NET_RESULT_SUCCESS ==
-                   chif_net_read(sock, buf, buflen, &readbytes));
+  ALF_CHECK_TRUE(state, !chif_net_read(sock, buf, buflen, &readbytes));
   ALF_CHECK_TRUE(state, readbytes > 100); // probably larger than 100 bytes
   free(buf);
 
@@ -89,7 +82,6 @@ bad_site(AlfTestState* state)
   const char* site = "no site";
   chif_net_address addr;
   ALF_CHECK_FALSE_R(state,
-                    CHIF_NET_RESULT_SUCCESS ==
-                      chif_net_create_address(&addr, site, "http", proto, af),
+                    !chif_net_create_address(&addr, site, "http", proto, af),
                     "attempting to lookup address no site");
 }

@@ -137,9 +137,7 @@ run_server(int argc, char** argv)
   uint8_t buf[bufsize];
   int bytes;
   if (proto == CHIF_NET_TRANSPORT_PROTOCOL_TCP) {
-    while (chif_net_read(clisock, buf, bufsize, &bytes) ==
-             CHIF_NET_RESULT_SUCCESS &&
-           bytes > 0) {
+    while (!chif_net_read(clisock, buf, bufsize, &bytes) && bytes > 0) {
       printf("read [%s], echoing it back.\n", (char*)buf);
       chif_net_write(clisock, buf, (size_t)bytes, &bytes);
     }
